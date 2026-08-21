@@ -1,0 +1,166 @@
+{
+  "results": [
+    {
+      "id": "minimal_bracket_rebalance",
+      "hops": [
+        {
+          "hop": 0,
+          "model": "gemma",
+          "verdict": null,
+          "code": "def minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n    \"\"\"\n    result = []\n    balance = 0\n    for char in s:\n        if char == '(':\n            balance += 1\n            result.append(char)\n        elif char == ')':\n            if balance == 0:\n                result.append('(')\n            else:\n                balance -= 1\n                result.append(char)\n    result.append(')' * balance)\n    return ''.join(result)",
+          "passed": false,
+          "error": "AssertionError: ",
+          "raw_response": "```python\ndef minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n    \"\"\"\n    result = []\n    balance = 0\n    \n    for char in s:\n        if char == '(':\n            balance += 1\n            result.append(char)\n        elif char == ')':\n            if balance == 0:\n                result.append('(')\n                # We inserted a '(', but it is immediately matched by the current ')'\n                # so the balance remains 0.\n            else:\n                balance -= 1\n                result.append(char)\n                \n    # Append closing brackets for any remaining open brackets\n    result.append(')' * balance)\n    \n    return \"\".join(result)\n```"
+        },
+        {
+          "hop": 1,
+          "model": "nemotron",
+          "verdict": "EDIT",
+          "code": "def minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n    \"\"\"\n    result = []\n    balance = 0\n    for char in s:\n        if char == '(':\n            balance += 1\n            result.append(char)\n        elif char == ')':\n            if balance == 0:\n                result.append('(')\n                result.append(')')\n            else:\n                balance -= 1\n                result.append(char)\n    result.append(')' * balance)\n    return ''.join(result)",
+          "passed": true,
+          "error": "",
+          "raw_response": "VERDICT: EDIT\n\n```python\ndef minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n    \"\"\"\n    result = []\n    balance = 0\n    for char in s:\n        if char == '(':\n            balance += 1\n            result.append(char)\n        elif char == ')':\n            if balance == 0:\n                # Insert a '(' before this ')'\n                result.append('(')\n                result.append(')')\n                # balance unchanged: we added an '(' then immediately matched it\n            else:\n                balance -= 1\n                result.append(char)\n    # Close any remaining unmatched '('\n    result.append(')' * balance)\n    return ''.join(result)\n```"
+        },
+        {
+          "hop": 2,
+          "model": "gptoss",
+          "verdict": "AGREE",
+          "code": "def minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n    \"\"\"\n    result = []\n    balance = 0\n    for char in s:\n        if char == '(':\n            balance += 1\n            result.append(char)\n        elif char == ')':\n            if balance == 0:\n                result.append('(')\n                result.append(')')\n            else:\n                balance -= 1\n                result.append(char)\n    result.append(')' * balance)\n    return ''.join(result)",
+          "passed": true,
+          "error": "",
+          "raw_response": "VERDICT: AGREE\n\n```python\ndef minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n    \"\"\"\n    result = []\n    balance = 0\n    for char in s:\n        if char == '(':\n            balance += 1\n            result.append(char)\n        elif char == ')':\n            if balance == 0:\n                result.append('(')\n                result.append(')')\n            else:\n                balance -= 1\n                result.append(char)\n    result.append(')' * balance)\n    return ''.join(result)\n```"
+        }
+      ],
+      "final_code": "def minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n    \"\"\"\n    result = []\n    balance = 0\n    for char in s:\n        if char == '(':\n            balance += 1\n            result.append(char)\n        elif char == ')':\n            if balance == 0:\n                result.append('(')\n                result.append(')')\n            else:\n                balance -= 1\n                result.append(char)\n    result.append(')' * balance)\n    return ''.join(result)",
+      "final_passed": true,
+      "stop_reason": "AGREE at hop 2 (gptoss)",
+      "n_hops_used": 3,
+      "tokens": 6120
+    },
+    {
+      "id": "collapse_runs",
+      "hops": [
+        {
+          "hop": 0,
+          "model": "gemma",
+          "verdict": null,
+          "code": "def collapse_runs(s: str) -> str:\n    \"\"\"\n    Given a string, collapse consecutive runs of the same character into a\n    shorter representation using this exact rule:\n\n    - A run of length 1 or 2 is left UNCHANGED (written out as-is).\n    - A run of length 3 or more is written as the character followed by\n      the run's length as a decimal number (no separator).\n\n    Runs are consecutive identical characters only; different characters\n    are never merged, and the original character order is preserved.\n    \"\"\"\n    if not s:\n        return ''\n    result = []\n    i = 0\n    n = len(s)\n    while i < n:\n        char = s[i]\n        count = 0\n        while i < n and s[i] == char:\n            count += 1\n            i += 1\n        if count < 3:\n            result.append(char * count)\n        else:\n            result.append(f'{char}{count}')\n    return ''.join(result)",
+          "passed": true,
+          "error": "",
+          "raw_response": "```python\ndef collapse_runs(s: str) -> str:\n    \"\"\"\n    Given a string, collapse consecutive runs of the same character into a\n    shorter representation using this exact rule:\n\n    - A run of length 1 or 2 is left UNCHANGED (written out as-is).\n    - A run of length 3 or more is written as the character followed by\n      the run's length as a decimal number (no separator).\n\n    Runs are consecutive identical characters only; different characters\n    are never merged, and the original character order is preserved.\n    \"\"\"\n    if not s:\n        return \"\"\n\n    result = []\n    i = 0\n    n = len(s)\n\n    while i < n:\n        char = s[i]\n        count = 0\n        while i < n and s[i] == char:\n            count += 1\n            i += 1\n        \n        if count < 3:\n            result.append(char * count)\n        else:\n            result.append(f\"{char}{count}\")\n\n    return \"\".join(result)\n```"
+        },
+        {
+          "hop": 1,
+          "model": "nemotron",
+          "verdict": "AGREE",
+          "code": "def collapse_runs(s: str) -> str:\n    \"\"\"\n    Given a string, collapse consecutive runs of the same character into a\n    shorter representation using this exact rule:\n\n    - A run of length 1 or 2 is left UNCHANGED (written out as-is).\n    - A run of length 3 or more is written as the character followed by\n      the run's length as a decimal number (no separator).\n\n    Runs are consecutive identical characters only; different characters\n    are never merged, and the original character order is preserved.\n    \"\"\"\n    if not s:\n        return ''\n    result = []\n    i = 0\n    n = len(s)\n    while i < n:\n        char = s[i]\n        count = 0\n        while i < n and s[i] == char:\n            count += 1\n            i += 1\n        if count < 3:\n            result.append(char * count)\n        else:\n            result.append(f'{char}{count}')\n    return ''.join(result)",
+          "passed": true,
+          "error": "",
+          "raw_response": "VERDICT: AGREE\n```python\ndef collapse_runs(s: str) -> str:\n    \"\"\"\n    Given a string, collapse consecutive runs of the same character into a\n    shorter representation using this exact rule:\n\n    - A run of length 1 or 2 is left UNCHANGED (written out as-is).\n    - A run of length 3 or more is written as the character followed by\n      the run's length as a decimal number (no separator).\n\n    Runs are consecutive identical characters only; different characters\n    are never merged, and the original character order is preserved.\n    \"\"\"\n    if not s:\n        return ''\n    result = []\n    i = 0\n    n = len(s)\n    while i < n:\n        char = s[i]\n        count = 0\n        while i < n and s[i] == char:\n            count += 1\n            i += 1\n        if count < 3:\n            result.append(char * count)\n        else:\n            result.append(f'{char}{count}')\n    return ''.join(result)\n```"
+        }
+      ],
+      "final_code": "def collapse_runs(s: str) -> str:\n    \"\"\"\n    Given a string, collapse consecutive runs of the same character into a\n    shorter representation using this exact rule:\n\n    - A run of length 1 or 2 is left UNCHANGED (written out as-is).\n    - A run of length 3 or more is written as the character followed by\n      the run's length as a decimal number (no separator).\n\n    Runs are consecutive identical characters only; different characters\n    are never merged, and the original character order is preserved.\n    \"\"\"\n    if not s:\n        return ''\n    result = []\n    i = 0\n    n = len(s)\n    while i < n:\n        char = s[i]\n        count = 0\n        while i < n and s[i] == char:\n            count += 1\n            i += 1\n        if count < 3:\n            result.append(char * count)\n        else:\n            result.append(f'{char}{count}')\n    return ''.join(result)",
+      "final_passed": true,
+      "stop_reason": "AGREE at hop 1 (nemotron)",
+      "n_hops_used": 2,
+      "tokens": 1793
+    },
+    {
+      "id": "merge_touching_intervals",
+      "hops": [
+        {
+          "hop": 0,
+          "model": "gemma",
+          "verdict": null,
+          "code": "def merge_touching_intervals(intervals: list) -> list:\n    \"\"\"\n    Given a list of (start, end) integer tuples representing intervals,\n    merge all intervals that overlap OR touch (i.e. one interval's end\n    equals another's start counts as a merge, not just strict overlap).\n\n    Return the merged intervals as a list of tuples, sorted by start.\n    Order of the input list does not matter.\n    \"\"\"\n    if not intervals:\n        return []\n    sorted_intervals = sorted(intervals, key=lambda x: x[0])\n    merged = []\n    current_start, current_end = sorted_intervals[0]\n    for i in range(1, len(sorted_intervals)):\n        next_start, next_end = sorted_intervals[i]\n        if next_start <= current_end:\n            current_end = max(current_end, next_end)\n        else:\n            merged.append((current_start, current_end))\n            current_start, current_end = (next_start, next_end)\n    merged.append((current_start, current_end))\n    return merged",
+          "passed": true,
+          "error": "",
+          "raw_response": "```python\ndef merge_touching_intervals(intervals: list) -> list:\n    \"\"\"\n    Given a list of (start, end) integer tuples representing intervals,\n    merge all intervals that overlap OR touch (i.e. one interval's end\n    equals another's start counts as a merge, not just strict overlap).\n\n    Return the merged intervals as a list of tuples, sorted by start.\n    Order of the input list does not matter.\n    \"\"\"\n    if not intervals:\n        return []\n\n    # Sort intervals by start time\n    sorted_intervals = sorted(intervals, key=lambda x: x[0])\n    \n    merged = []\n    current_start, current_end = sorted_intervals[0]\n\n    for i in range(1, len(sorted_intervals)):\n        next_start, next_end = sorted_intervals[i]\n        \n        # If the next interval starts before or exactly when the current one ends, merge them\n        if next_start <= current_end:\n            current_end = max(current_end, next_end)\n        else:\n            # Otherwise, push the current interval and move to the next\n            merged.append((current_start, current_end))\n            current_start, current_end = next_start, next_end\n\n    # Append the final interval\n    merged.append((current_start, current_end))\n    \n    return merged\n```"
+        },
+        {
+          "hop": 1,
+          "model": "nemotron",
+          "verdict": "AGREE",
+          "code": "def merge_touching_intervals(intervals: list) -> list:\n    \"\"\"\n    Given a list of (start, end) integer tuples representing intervals,\n    merge all intervals that overlap OR touch (i.e. one interval's end\n    equals another's start counts as a merge, not just strict overlap).\n\n    Return the merged intervals as a list of tuples, sorted by start.\n    Order of the input list does not matter.\n    \"\"\"\n    if not intervals:\n        return []\n    sorted_intervals = sorted(intervals, key=lambda x: x[0])\n    merged = []\n    current_start, current_end = sorted_intervals[0]\n    for i in range(1, len(sorted_intervals)):\n        next_start, next_end = sorted_intervals[i]\n        if next_start <= current_end:\n            current_end = max(current_end, next_end)\n        else:\n            merged.append((current_start, current_end))\n            current_start, current_end = (next_start, next_end)\n    merged.append((current_start, current_end))\n    return merged",
+          "passed": true,
+          "error": "",
+          "raw_response": "VERDICT: AGREE\n\n```python\ndef merge_touching_intervals(intervals: list) -> list:\n    \"\"\"\n    Given a list of (start, end) integer tuples representing intervals,\n    merge all intervals that overlap OR touch (i.e. one interval's end\n    equals another's start counts as a merge, not just strict overlap).\n\n    Return the merged intervals as a list of tuples, sorted by start.\n    Order of the input list does not matter.\n    \"\"\"\n    if not intervals:\n        return []\n    sorted_intervals = sorted(intervals, key=lambda x: x[0])\n    merged = []\n    current_start, current_end = sorted_intervals[0]\n    for i in range(1, len(sorted_intervals)):\n        next_start, next_end = sorted_intervals[i]\n        if next_start <= current_end:\n            current_end = max(current_end, next_end)\n        else:\n            merged.append((current_start, current_end))\n            current_start, current_end = (next_start, next_end)\n    merged.append((current_start, current_end))\n    return merged\n```"
+        }
+      ],
+      "final_code": "def merge_touching_intervals(intervals: list) -> list:\n    \"\"\"\n    Given a list of (start, end) integer tuples representing intervals,\n    merge all intervals that overlap OR touch (i.e. one interval's end\n    equals another's start counts as a merge, not just strict overlap).\n\n    Return the merged intervals as a list of tuples, sorted by start.\n    Order of the input list does not matter.\n    \"\"\"\n    if not intervals:\n        return []\n    sorted_intervals = sorted(intervals, key=lambda x: x[0])\n    merged = []\n    current_start, current_end = sorted_intervals[0]\n    for i in range(1, len(sorted_intervals)):\n        next_start, next_end = sorted_intervals[i]\n        if next_start <= current_end:\n            current_end = max(current_end, next_end)\n        else:\n            merged.append((current_start, current_end))\n            current_start, current_end = (next_start, next_end)\n    merged.append((current_start, current_end))\n    return merged",
+      "final_passed": true,
+      "stop_reason": "AGREE at hop 1 (nemotron)",
+      "n_hops_used": 2,
+      "tokens": 1794
+    },
+    {
+      "id": "first_mismatch_index",
+      "hops": [
+        {
+          "hop": 0,
+          "model": "gemma",
+          "verdict": null,
+          "code": "def first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    mapping = {')': '(', ']': '[', '}': '{'}\n    for i, char in enumerate(s):\n        if char in '([{':\n            stack.append((char, i))\n        elif char in ')]}':\n            if not stack or stack[-1][0] != mapping[char]:\n                return i\n            stack.pop()\n    if stack:\n        return stack[0][1]\n    return -1",
+          "passed": true,
+          "error": "",
+          "raw_response": "```python\ndef first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    mapping = {')': '(', ']': '[', '}': '{'}\n    \n    for i, char in enumerate(s):\n        if char in '([{':\n            stack.append((char, i))\n        elif char in ')]}':\n            if not stack or stack[-1][0] != mapping[char]:\n                return i\n            stack.pop()\n            \n    if stack:\n        return stack[0][1]\n        \n    return -1\n```"
+        },
+        {
+          "hop": 1,
+          "model": "nemotron",
+          "verdict": "EDIT",
+          "code": "def first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    mapping = {')': '(', ']': '[', '}': '{'}\n    for i, char in enumerate(s):\n        if char in '([{':\n            stack.append((char, i))\n        elif char in ')]}':\n            if not stack or stack[-1][0] != mapping[char]:\n                return i\n            stack.pop()\n    if stack:\n        if stack:\n            return stack[0][1]\n        return -1",
+          "passed": false,
+          "error": "AssertionError: ",
+          "raw_response": "VERDICT: AGREE\n\n```python\ndef first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    mapping = {')': '(', ']': '[', '}': '{'}\n    for i, char in enumerate(s):\n        if char in '([{':\n            stack.append((char, i))\n        elif char in ')]}':\n            if not stack or stack[-1][0] != mapping[char]:\n                return i\n            stack.pop()\n    if stack:\n        if stack:\n            return stack[0][1]\n        return -1\n```"
+        },
+        {
+          "hop": 2,
+          "model": "gptoss",
+          "verdict": "EDIT",
+          "code": "def first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    matching = {')': '(', ']': '[', '}': '{'}\n    for i, ch in enumerate(s):\n        if ch in matching.values():\n            stack.append((ch, i))\n        elif ch in matching:\n            if not stack or stack[-1][0] != matching[ch]:\n                return i\n            stack.pop()\n    if stack:\n        return stack[0][1]\n    return -1",
+          "passed": true,
+          "error": "",
+          "raw_response": "VERDICT: EDIT\n\n```python\ndef first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []  # will hold tuples of (opening_char, index)\n    matching = {')': '(', ']': '[', '}': '{'}\n\n    for i, ch in enumerate(s):\n        if ch in matching.values():          # opening bracket\n            stack.append((ch, i))\n        elif ch in matching:                 # closing bracket\n            if not stack or stack[-1][0] != matching[ch]:\n                return i                     # mismatched closing bracket\n            stack.pop()                      # matched pair, pop the opening\n\n    # After processing all characters\n    if stack:\n        # Earliest unclosed opening bracket\n        return stack[0][1]\n    # No mismatches and no unclosed brackets\n    return -1\n```"
+        },
+        {
+          "hop": 3,
+          "model": "minimax",
+          "verdict": "AGREE",
+          "code": "def first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    matching = {')': '(', ']': '[', '}': '{'}\n    for i, ch in enumerate(s):\n        if ch in matching.values():\n            stack.append((ch, i))\n        elif ch in matching:\n            if not stack or stack[-1][0] != matching[ch]:\n                return i\n            stack.pop()\n    if stack:\n        return stack[0][1]\n    return -1",
+          "passed": true,
+          "error": "",
+          "raw_response": "VERDICT: AGREE\n\n```python\ndef first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    matching = {')': '(', ']': '[', '}': '{'}\n    for i, ch in enumerate(s):\n        if ch in matching.values():\n            stack.append((ch, i))\n        elif ch in matching:\n            if not stack or stack[-1][0] != matching[ch]:\n                return i\n            stack.pop()\n    if stack:\n        return stack[0][1]\n    return -1\n```"
+        }
+      ],
+      "final_code": "def first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n    \"\"\"\n    stack = []\n    matching = {')': '(', ']': '[', '}': '{'}\n    for i, ch in enumerate(s):\n        if ch in matching.values():\n            stack.append((ch, i))\n        elif ch in matching:\n            if not stack or stack[-1][0] != matching[ch]:\n                return i\n            stack.pop()\n    if stack:\n        return stack[0][1]\n    return -1",
+      "final_passed": true,
+      "stop_reason": "AGREE at hop 3 (minimax)",
+      "n_hops_used": 4,
+      "tokens": 5489
+    }
+  ],
+  "token_ledger": {
+    "gemma": {
+      "prompt": 1272,
+      "completion": 1193,
+      "calls": 4
+    },
+    "nemotron": {
+      "prompt": 3131,
+      "completion": 4868,
+      "calls": 4
+    },
+    "gptoss": {
+      "prompt": 1732,
+      "completion": 1303,
+      "calls": 2
+    },
+    "minimax": {
+      "prompt": 985,
+      "completion": 712,
+      "calls": 1
+    }
+  },
+  "total_tokens": 15196
+}

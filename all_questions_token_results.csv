@@ -1,0 +1,5 @@
+id,entry_point,input_tokens,output_tokens,thought_tokens,total_tokens
+minimal_bracket_rebalance,minimal_bracket_rebalance,207,370,1032,1609
+collapse_runs,collapse_runs,177,268,678,1123
+merge_touching_intervals,merge_touching_intervals,174,339,1531,2044
+first_mismatch_index,first_mismatch_index,237,375,1644,2256

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "minimal_bracket_rebalance",
+    "prompt": "def minimal_bracket_rebalance(s: str) -> str:\n    \"\"\"\n    You're given a string of only '(' and ')' characters, possibly\n    unbalanced. Fix it into a valid (fully balanced) parenthesis string\n    using this exact left-to-right greedy procedure, WITHOUT deleting or\n    reordering any of the original characters:\n\n    Scan the string left to right, tracking a running count of unmatched\n    open parens seen so far. Whenever you encounter a ')' while that count\n    is 0 (i.e. there's no open paren for it to match), insert a '(' into\n    the output immediately before that ')'. At the very end, append enough\n    ')' characters to close any '(' that are still unmatched.\n\n    >>> minimal_bracket_rebalance('(((')\n    '((()))'\n    >>> minimal_bracket_rebalance(')(')\n    '()()'\n    \"\"\"\n",
+    "check": "\ndef check(candidate):\n    assert candidate('(((') == '((()))'\n    assert candidate(')(') == '()()'\n    assert candidate('') == ''\n    assert candidate('()') == '()'\n    assert candidate('(()') == '(())'\n    assert candidate('())') == '()()'\n    assert candidate('))((') == '()()(())'\n    assert candidate(')))') == '()()()'\n",
+    "entry_point": "minimal_bracket_rebalance"
+  },
+  {
+    "id": "collapse_runs",
+    "prompt": "def collapse_runs(s: str) -> str:\n    \"\"\"\n    Given a string, collapse consecutive runs of the same character into a\n    shorter representation using this exact rule:\n\n    - A run of length 1 or 2 is left UNCHANGED (written out as-is).\n    - A run of length 3 or more is written as the character followed by\n      the run's length as a decimal number (no separator).\n\n    Runs are consecutive identical characters only; different characters\n    are never merged, and the original character order is preserved.\n\n    >>> collapse_runs('aaabbc')\n    'a3bbc'\n    >>> collapse_runs('aabbcc')\n    'aabbcc'\n    >>> collapse_runs('aaaaaaaaaa')\n    'a10'\n    \"\"\"\n",
+    "check": "\ndef check(candidate):\n    assert candidate('aaabbc') == 'a3bbc'\n    assert candidate('aabbcc') == 'aabbcc'\n    assert candidate('a') == 'a'\n    assert candidate('') == ''\n    assert candidate('aaaaaaaaaa') == 'a10'\n    assert candidate('abcabc') == 'abcabc'\n    assert candidate('aabbbbccccc') == 'aab4c5'\n    assert candidate('zzz') == 'z3'\n",
+    "entry_point": "collapse_runs"
+  },
+  {
+    "id": "merge_touching_intervals",
+    "prompt": "def merge_touching_intervals(intervals: list) -> list:\n    \"\"\"\n    Given a list of (start, end) integer tuples representing intervals,\n    merge all intervals that overlap OR touch (i.e. one interval's end\n    equals another's start counts as a merge, not just strict overlap).\n\n    Return the merged intervals as a list of tuples, sorted by start.\n    Order of the input list does not matter.\n\n    >>> merge_touching_intervals([(1,3),(2,6),(8,10),(15,18)])\n    [(1,6),(8,10),(15,18)]\n    >>> merge_touching_intervals([(1,4),(4,5)])\n    [(1,5)]\n    \"\"\"\n",
+    "check": "\ndef check(candidate):\n    assert candidate([(1,3),(2,6),(8,10),(15,18)]) == [(1,6),(8,10),(15,18)]\n    assert candidate([(1,4),(4,5)]) == [(1,5)]\n    assert candidate([(1,4),(5,6)]) == [(1,4),(5,6)]\n    assert candidate([]) == []\n    assert candidate([(1,4)]) == [(1,4)]\n    assert candidate([(1,10),(2,3),(4,5)]) == [(1,10)]\n    assert candidate([(5,7),(1,3)]) == [(1,3),(5,7)]\n",
+    "entry_point": "merge_touching_intervals"
+  },
+  {
+    "id": "first_mismatch_index",
+    "prompt": "def first_mismatch_index(s: str) -> int:\n    \"\"\"\n    Given a string containing only the characters '(', ')', '[', ']',\n    '{', '}', find the index of the first character that makes the\n    string invalid as a properly nested bracket sequence, using this\n    exact rule:\n\n    Scan left to right using a stack of open brackets. If you encounter\n    a closing bracket and the stack is empty, OR the top of the stack is\n    not the matching open bracket for it, that closing bracket's index\n    is the first mismatch. If the string is a valid, fully-closed nested\n    sequence, return -1. If the string ends with unclosed open brackets\n    remaining on the stack (but no closing-bracket mismatch occurred),\n    return the index of the EARLIEST unclosed open bracket.\n\n    >>> first_mismatch_index('([])')\n    -1\n    >>> first_mismatch_index('([)]')\n    2\n    >>> first_mismatch_index('((()')\n    0\n    \"\"\"\n",
+    "check": "\ndef check(candidate):\n    assert candidate('([])') == -1\n    assert candidate('([)]') == 2\n    assert candidate('((()') == 0\n    assert candidate(')(') == 0\n    assert candidate('') == -1\n    assert candidate('{[()]}') == -1\n    assert candidate('{[(])}') == 3\n    assert candidate('(((') == 0\n    assert candidate(']') == 0\n    assert candidate('()[]{}') == -1\n",
+    "entry_point": "first_mismatch_index"
+  }
+]

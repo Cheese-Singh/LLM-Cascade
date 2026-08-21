@@ -1,0 +1,50 @@
+{
+  "rows": [
+    {
+      "id": "minimal_bracket_rebalance",
+      "type": "code",
+      "cascade_passed": true,
+      "cascade_error": "",
+      "cascade_hops": 3,
+      "cascade_tokens": 6120,
+      "gemini_passed": true,
+      "gemini_error": "",
+      "gemini_tokens": 1609
+    },
+    {
+      "id": "collapse_runs",
+      "type": "code",
+      "cascade_passed": true,
+      "cascade_error": "",
+      "cascade_hops": 2,
+      "cascade_tokens": 1793,
+      "gemini_passed": false,
+      "gemini_error": "NameError: name 'groupby' is not defined",
+      "gemini_tokens": 1123
+    },
+    {
+      "id": "merge_touching_intervals",
+      "type": "code",
+      "cascade_passed": true,
+      "cascade_error": "",
+      "cascade_hops": 2,
+      "cascade_tokens": 1794,
+      "gemini_passed": true,
+      "gemini_error": "",
+      "gemini_tokens": 2044
+    },
+    {
+      "id": "first_mismatch_index",
+      "type": "code",
+      "cascade_passed": true,
+      "cascade_error": "",
+      "cascade_hops": 4,
+      "cascade_tokens": 5489,
+      "gemini_passed": true,
+      "gemini_error": "",
+      "gemini_tokens": 2256
+    }
+  ],
+  "judge_model": "qwen3.5:397b-cloud",
+  "seed": 42
+}
