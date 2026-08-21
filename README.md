@@ -59,7 +59,7 @@ You'll need:
 
 **1. Run the cascade:**
 ```bash
-python3 main.py --problems-file all_questions.json
+python3 main.py
 ```
 This writes `spike_results.json`, including per-problem token usage and the
 full hop-by-hop trace (every model's raw response) for inspection.
