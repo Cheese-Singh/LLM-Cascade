@@ -19,7 +19,7 @@ MODELS = {
     "minimax": "minimax-m3:cloud",
 }
 
-CHAIN_ORDER = ["gemma", "nemotron", "gptoss", "minimax"]
+CHAIN_ORDER = ["gemma", "gptoss", "nemotron", "minimax"]
 
 EXEC_TIMEOUT_S = 5
 DEFAULT_PROBLEMS_FILE = Path(__file__).parent / "all_questions.json"
@@ -35,7 +35,9 @@ class TokenLedger:
 
     def set_problem(self, problem_id: str):            
         self._current_problem_id = problem_id
-        self.per_problem.setdefault(problem_id, {"prompt": 0, "completion": 0, "calls": 0})
+        self.per_problem.setdefault(problem_id, {
+            "prompt": 0, "completion": 0, "calls": 0, "by_model": {}
+        })
 
     def add(self, model_key: str, prompt_tokens: int, completion_tokens: int):
         if model_key not in self.per_model:
@@ -49,6 +51,12 @@ class TokenLedger:
             p["prompt"] += prompt_tokens
             p["completion"] += completion_tokens
             p["calls"] += 1
+            model_counts = p["by_model"].setdefault(
+                model_key, {"prompt": 0, "completion": 0, "calls": 0}
+            )
+            model_counts["prompt"] += prompt_tokens
+            model_counts["completion"] += completion_tokens
+            model_counts["calls"] += 1
 
     def total_tokens(self) -> int:
         return sum(v["prompt"] + v["completion"] for v in self.per_model.values())
@@ -56,6 +64,13 @@ class TokenLedger:
     def tokens_for_problem(self, problem_id: str) -> int:  
         p = self.per_problem.get(problem_id)
         return (p["prompt"] + p["completion"]) if p else 0
+
+    def model_tokens_for_problem(self, problem_id: str) -> dict:
+        problem = self.per_problem.get(problem_id, {})
+        return {
+            model: counts["prompt"] + counts["completion"]
+            for model, counts in problem.get("by_model", {}).items()
+        }
 
     def report(self) -> str:
         lines = ["\n=== TOKEN USAGE ==="]
@@ -131,8 +146,14 @@ def call_ollama(model_key, system_prompt, user_prompt, temperature=0.2):
         ) from e
 
     content = response.message.content or ""
-    LEDGER.add(model_key, response.prompt_eval_count or 0, response.eval_count or 0)
-    return content
+    prompt_tokens = response.prompt_eval_count or 0
+    completion_tokens = response.eval_count or 0
+    LEDGER.add(model_key, prompt_tokens, completion_tokens)
+    return content, {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": prompt_tokens + completion_tokens,
+    }
 
 
 def _isolate_function(block: str, entry_point: str) -> str:
@@ -152,7 +173,8 @@ def _isolate_function(block: str, entry_point: str) -> str:
     if target is None:
         return block
 
-    return ast.unparse(target)
+    imports = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))]
+    return ast.unparse(ast.Module(body=[*imports, target], type_ignores=[]))
 
 
 def extract_code(text: str, entry_point: str) -> str:
@@ -277,13 +299,13 @@ def run_cascade(problem: dict, chain: list[str]) -> dict:
 
     for i, model_key in enumerate(chain):
         if i == 0:
-            raw = call_ollama(model_key, FIRST_HOP_SYSTEM, first_hop_prompt(problem))
+            raw, usage = call_ollama(model_key, FIRST_HOP_SYSTEM, first_hop_prompt(problem))
             code = extract_code(raw, problem["entry_point"])
             verdict = None
             passed, err = run_check(problem, code)
         else:
             prior_passed, prior_err = run_check(problem, current_code)
-            raw = call_ollama(
+            raw, usage = call_ollama(
                 model_key,
                 REVIEW_SYSTEM,
                 review_prompt(problem, current_code, prior_passed, prior_err),
@@ -307,6 +329,7 @@ def run_cascade(problem: dict, chain: list[str]) -> dict:
         hops.append({
             "hop": i,
             "model": model_key,
+            "usage": usage,
             "verdict": verdict,
             "code": code,
             "passed": passed,
@@ -328,6 +351,7 @@ def run_cascade(problem: dict, chain: list[str]) -> dict:
         "final_passed": hops[-1]["passed"],
         "stop_reason": stop_reason,
         "n_hops_used": len(hops),
+        "tokens_by_model": LEDGER.model_tokens_for_problem(problem["id"]),
     }
 
 
@@ -377,8 +401,8 @@ def main():
 
     all_results = []
 
-    for problem in problems:
-        print(f"{'='*70}\nProblem: {problem['id']}\n{'='*70}")
+    for question_number, problem in enumerate(problems, start=1):
+        print(f"{'='*70}\nQuestion {question_number}: {problem['id']}\n{'='*70}")
         try:
             result = run_cascade(problem, CHAIN_ORDER)
             result["tokens"] = LEDGER.tokens_for_problem(problem["id"])   
@@ -387,7 +411,17 @@ def main():
             for hop in result["hops"]:
                 status = "PASS" if hop["passed"] else "FAIL"
                 verdict_str = f"[{hop['verdict']}]" if hop["verdict"] else "[origin draft]"
-                print(f"  hop {hop['hop']} ({hop['model']}) {verdict_str}: {status}")
+                usage = hop.get("usage", {})
+                token_str = f"tokens={usage['total_tokens']}" if usage else "tokens=?"
+                print(f"  hop {hop['hop']} ({hop['model']}) {verdict_str}: {status} ({token_str})")
+
+            model_tokens = ", ".join(
+                f"{model}={tokens}"
+                for model, tokens in result["tokens_by_model"].items()
+            )
+            print("  Tokens by model:")
+            for model, tokens in result["tokens_by_model"].items():
+                print(f"    {model} | {tokens}")
 
             print(f"  STOPPED: {result['stop_reason']}")
             print(f"  Hops used: {result['n_hops_used']}/{len(CHAIN_ORDER)}")

@@ -44,7 +44,8 @@ def _isolate_function(block: str, entry_point: str) -> str:
     if target is None:
         return block
 
-    return ast.unparse(target)
+    imports = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))]
+    return ast.unparse(ast.Module(body=[*imports, target], type_ignores=[]))
 
 
 def extract_code(text: str, entry_point: str) -> str:
@@ -119,9 +120,44 @@ def index_cascade_results(cascade_data: dict) -> dict[str, dict]:
     return {r["id"]: r for r in results}
 
 
-def index_gemini_results(gemini_data: list[dict]) -> dict[str, dict]:
-    """<questions>_token_results.json -> {problem_id: result}"""
-    return {r["id"]: r for r in gemini_data if "error" not in r}
+def index_gemini_results(gemini_data: Any) -> dict[str, dict]:
+    """Index either the legacy Gemini list or gemini_conditions.py output."""
+    results = gemini_data.get("results", gemini_data) if isinstance(gemini_data, dict) else gemini_data
+    return {r["id"]: r for r in results if "error" not in r}
+
+
+def gemini_code(result: Optional[dict], entry_point: str) -> str:
+    """Extract code from either a condition result or the legacy baseline."""
+    if not result:
+        return ""
+    code = result.get("final_code")
+    if code is not None:
+        return code
+    return extract_code(result.get("response_text", ""), entry_point)
+
+
+def gemini_tokens(result: Optional[dict]) -> Optional[int]:
+    if not result:
+        return None
+    return result.get("tokens", result.get("total_tokens"))
+
+
+def cascade_model_tokens(result: Optional[dict]) -> str:
+    """Format per-hop model totals for the human-readable report."""
+    if not result:
+        return "-"
+    if result.get("tokens_by_model"):
+        return ", ".join(
+            f"{model}: {total}"
+            for model, total in result["tokens_by_model"].items()
+        )
+    parts = []
+    for hop in result.get("hops", []):
+        usage = hop.get("usage", {})
+        total = usage.get("total_tokens")
+        if total is not None:
+            parts.append(f"{hop.get('model', '?')}: {total}")
+    return ", ".join(parts) or "-"
 
 JUDGE_SYSTEM = (
     "You are an impartial evaluator. You will be shown a question and two "
@@ -246,7 +282,7 @@ def get_cascade_tokens(cascade_result: Optional[dict]) -> Optional[int]:
 def compare_problem(
     problem: dict,
     cascade_result: Optional[dict],
-    gemini_result: Optional[dict],
+    gemini_results: dict[str, Optional[dict]],
     judge_model: str,
     rng: random.Random,
 ) -> dict:
@@ -257,54 +293,49 @@ def compare_problem(
 
     if cascade_result is None:
         row["cascade_status"] = "missing"
-    if gemini_result is None:
-        row["gemini_status"] = "missing"
-
     if is_code:
         cascade_code = cascade_result.get("final_code", "") if cascade_result else ""
         cascade_passed, cascade_err = (
             run_check(problem, cascade_code) if cascade_result else (False, "no result")
         )
-
-        gemini_text = gemini_result.get("response_text", "") if gemini_result else ""
-        gemini_code = extract_code(gemini_text, problem["entry_point"])
-        gemini_passed, gemini_err = (
-            run_check(problem, gemini_code) if gemini_result else (False, "no result")
-        )
-
         row.update({
             "cascade_passed": cascade_passed,
             "cascade_error": cascade_err,
             "cascade_hops": cascade_result.get("n_hops_used") if cascade_result else None,
             "cascade_tokens": get_cascade_tokens(cascade_result),
-            "gemini_passed": gemini_passed,
-            "gemini_error": gemini_err,
-            "gemini_tokens": gemini_result.get("total_tokens") if gemini_result else None,
+            "cascade_model_tokens": cascade_model_tokens(cascade_result),
         })
+
+        for condition, result in gemini_results.items():
+            code = gemini_code(result, problem["entry_point"])
+            passed, error = run_check(problem, code) if result else (False, "no result")
+            row[f"{condition}_passed"] = passed
+            row[f"{condition}_error"] = error
+            row[f"{condition}_tokens"] = gemini_tokens(result)
     else:
         cascade_text = cascade_result.get("final_code", "") if cascade_result else ""
-        gemini_text = gemini_result.get("response_text", "") if gemini_result else ""
-
-        if cascade_result and gemini_result:
-            judged = judge_open_ended(problem, cascade_text, gemini_text, judge_model, rng)
-            row.update(judged)
-            row["cascade_won"] = judged["cascade_score"] > judged["gemini_score"]
-            row["tie"] = judged["cascade_score"] == judged["gemini_score"]
-        else:
-            row["judge_skipped_reason"] = "missing cascade or gemini result"
+        for condition, result in gemini_results.items():
+            if cascade_result and result:
+                gemini_text = result.get("final_code", result.get("response_text", ""))
+                judged = judge_open_ended(problem, cascade_text, gemini_text, judge_model, rng)
+                row[f"{condition}_judged"] = judged
+            else:
+                row[f"{condition}_judge_skipped_reason"] = "missing cascade or Gemini result"
 
     return row
 
 
-def build_report(rows: list[dict], cascade_total_tokens: int, gemini_total_tokens: int) -> str:
+def build_report(
+    rows: list[dict], cascade_total_tokens: int, cascade_model_totals: dict[str, dict],
+    gemini_totals: dict[str, int]
+) -> str:
     code_rows = [r for r in rows if r["type"] == "code"]
     open_rows = [r for r in rows if r["type"] == "open_ended"]
 
-    lines = ["# Cascade vs. Gemini 3.6 Flash — Comparison Report", ""]
+    lines = ["# Cascade vs. Gemini Conditions — Comparison Report", ""]
 
     if code_rows:
         cascade_pass = sum(1 for r in code_rows if r.get("cascade_passed"))
-        gemini_pass = sum(1 for r in code_rows if r.get("gemini_passed"))
         n = len(code_rows)
         has_cascade_tokens = any(r.get("cascade_tokens") is not None for r in code_rows)
 
@@ -312,49 +343,40 @@ def build_report(rows: list[dict], cascade_total_tokens: int, gemini_total_token
             "## Code problems (execution-graded, no judge involved)",
             "",
             f"- Cascade pass@1: {cascade_pass}/{n} ({cascade_pass/n:.1%})",
-            f"- Gemini 3.6 Flash pass@1: {gemini_pass}/{n} ({gemini_pass/n:.1%})",
-            "",
         ]
+        for condition in gemini_totals:
+            passed = sum(1 for r in code_rows if r.get(f"{condition}_passed"))
+            lines.append(f"- {condition} pass@1: {passed}/{n} ({passed/n:.1%})")
+        lines.append("")
 
         if has_cascade_tokens:
-            lines += [
-                "| Problem | Cascade | Gemini | Cascade tokens | Gemini tokens | Token delta |",
-                "|---|---|---|---|---|---|",
-            ]
+            conditions = list(gemini_totals)
+            headers = ["Problem", "Cascade"] + conditions + ["Cascade model tokens", "Cascade tokens"] + [f"{c} tokens" for c in conditions]
+            lines += ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)]
             for r in code_rows:
-                ct, gt = r.get("cascade_tokens"), r.get("gemini_tokens")
-                delta = f"+{ct - gt}" if (ct is not None and gt is not None) else "-"
-                lines.append(
-                    f"| {r['id']} | {'✅' if r.get('cascade_passed') else '❌'} | "
-                    f"{'✅' if r.get('gemini_passed') else '❌'} | "
-                    f"{ct if ct is not None else '-'} | {gt if gt is not None else '-'} | {delta} |"
-                )
+                values = [r["id"], "✅" if r.get("cascade_passed") else "❌"]
+                values += ["✅" if r.get(f"{c}_passed") else "❌" for c in conditions]
+                values += [r.get("cascade_model_tokens", "-"), str(r.get("cascade_tokens", "-"))]
+                values += [str(r.get(f"{c}_tokens", "-")) for c in conditions]
+                lines.append("| " + " | ".join(values) + " |")
             lines += [
                 "",
-                "> Token delta = cascade tokens minus Gemini tokens for that problem "
-                "(positive = cascade spent more). Read this next to the pass/fail "
-                "columns — a positive delta on a problem cascade got right and Gemini "
-                "got wrong is the actual 'spent more, got it right' evidence; a "
-                "positive delta where both passed is pure overhead worth noting as "
-                "a limitation.",
+                "> Token columns are per-problem totals. Compare them alongside the "
+                "pass/fail columns; a condition may improve correctness at additional cost.",
             ]
         else:
-            lines += [
-                "| Problem | Cascade | Gemini | Cascade hops | Gemini tokens |",
-                "|---|---|---|---|---|",
-            ]
+            conditions = list(gemini_totals)
+            headers = ["Problem", "Cascade"] + conditions + ["Cascade hops"] + [f"{c} tokens" for c in conditions]
+            lines += ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)]
             for r in code_rows:
-                lines.append(
-                    f"| {r['id']} | {'✅' if r.get('cascade_passed') else '❌'} | "
-                    f"{'✅' if r.get('gemini_passed') else '❌'} | "
-                    f"{r.get('cascade_hops', '-')} | {r.get('gemini_tokens', '-')} |"
-                )
+                values = [r["id"], "✅" if r.get("cascade_passed") else "❌"]
+                values += ["✅" if r.get(f"{c}_passed") else "❌" for c in conditions]
+                values += [str(r.get("cascade_hops", "-"))]
+                values += [str(r.get(f"{c}_tokens", "-")) for c in conditions]
+                lines.append("| " + " | ".join(values) + " |")
             lines += [
                 "",
-                "> Per-problem cascade token counts aren't available in this run "
-                "(spike_results.json has no 'tokens' field per result — see "
-                "main_py_patch_notes.md to add per-problem token tracking to "
-                "main.py). Showing hop count as a rough proxy instead.",
+                "> Per-problem cascade token counts are unavailable; cascade hops are shown instead.",
             ]
         lines.append("")
 
@@ -393,14 +415,26 @@ def build_report(rows: list[dict], cascade_total_tokens: int, gemini_total_token
         "## Token totals (whole run)",
         "",
         f"- Cascade total tokens: {cascade_total_tokens}",
-        f"- Gemini total tokens: {gemini_total_tokens}",
         "",
-        "> Cascade tokens reflect every hop across the chain (gemma → nemotron → "
-        "gptoss → minimax as needed); Gemini tokens reflect a single call per "
-        "question. These are not directly divided into a single 'tokens per point "
-        "of accuracy' ratio here because the two systems' unit of work differs — "
-        "report both totals and let the pass-rate / win-rate tables above carry "
-        "the quality comparison.",
+    ]
+    for condition, total in gemini_totals.items():
+        lines.insert(-1, f"- {condition} total tokens: {total}")
+    lines += [
+        "",
+        "### Cascade by model",
+        "",
+        "| Model | Calls | Prompt tokens | Completion tokens | Total tokens |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for model, counts in cascade_model_totals.items():
+        prompt = counts.get("prompt", 0)
+        completion = counts.get("completion", 0)
+        lines.append(
+            f"| {model} | {counts.get('calls', 0)} | {prompt} | {completion} | {prompt + completion} |"
+        )
+    lines += [
+        "",
+        "> Cascade tokens include every model hop. Gemini condition totals include all calls used by that condition.",
     ]
 
     return "\n".join(lines)
@@ -412,8 +446,14 @@ def parse_args():
                     help="Problems file (default: all_questions.json)")
     p.add_argument("--cascade-results", type=Path, default=Path("spike_results.json"),
                     help="Cascade output from main.py (default: spike_results.json)")
-    p.add_argument("--gemini-results", type=Path, default=Path("all_questions_token_results.json"),
-                    help="Gemini output from gemini_token_test.py (default: all_questions_token_results.json)")
+    p.add_argument("--gemini-results", type=Path, default=None,
+                    help="Legacy one-shot Gemini result file; overrides --gemini-one-shot")
+    p.add_argument("--gemini-one-shot", type=Path, default=Path("gemini_one_shot_results.json"),
+                    help="Gemini one-shot result file")
+    p.add_argument("--gemini-blind", type=Path, default=Path("gemini_blind_results.json"),
+                    help="Gemini blind-iteration result file")
+    p.add_argument("--gemini-context", type=Path, default=Path("gemini_context_results.json"),
+                    help="Gemini context-iteration result file")
     p.add_argument("--judge-model", type=str, default=DEFAULT_JUDGE_MODEL,
                     help=f"Third-party judge for open-ended problems (default: {DEFAULT_JUDGE_MODEL}). "
                          f"Must NOT be a model used inside either system under test.")
@@ -435,24 +475,44 @@ def main():
     cascade_by_id = index_cascade_results(cascade_data)
     cascade_total_tokens = cascade_data.get("total_tokens", 0)
 
-    gemini_data = load_json(args.gemini_results)
-    gemini_by_id = index_gemini_results(gemini_data)
-    gemini_total_tokens = sum(
-        r.get("total_tokens", 0) for r in gemini_by_id.values()
-    )
+    gemini_paths = {
+        "one_shot": args.gemini_results or args.gemini_one_shot,
+        "blind_iter": args.gemini_blind,
+        "context_iter": args.gemini_context,
+    }
+    gemini_by_condition = {}
+    gemini_totals = {}
+    for condition, path in gemini_paths.items():
+        if path.exists():
+            data = load_json(path)
+            gemini_by_condition[condition] = index_gemini_results(data)
+            gemini_totals[condition] = data.get("total_tokens", 0) if isinstance(data, dict) else sum(
+                gemini_tokens(result) or 0 for result in gemini_by_condition[condition].values()
+            )
+        else:
+            gemini_by_condition[condition] = {}
+            gemini_totals[condition] = 0
+            print(f"  [warning] Gemini {condition} file not found: {path}", file=sys.stderr)
 
     rows = []
     for problem_id, problem in problems_by_id.items():
         cascade_result = cascade_by_id.get(problem_id)
-        gemini_result = gemini_by_id.get(problem_id)
+        gemini_results = {
+            condition: results.get(problem_id)
+            for condition, results in gemini_by_condition.items()
+        }
         try:
-            row = compare_problem(problem, cascade_result, gemini_result, args.judge_model, rng)
+            row = compare_problem(problem, cascade_result, gemini_results, args.judge_model, rng)
         except Exception as e:
             row = {"id": problem_id, "type": "error", "error": str(e)}
             print(f"  [error] {problem_id}: {e}", file=sys.stderr)
         rows.append(row)
         if row["type"] == "code":
-            status = f"cascade_passed={row.get('cascade_passed', '?')}"
+            statuses = ", ".join(
+                f"{condition}={row.get(f'{condition}_passed', '?')}"
+                for condition in gemini_paths
+            )
+            status = f"cascade={row.get('cascade_passed', '?')}, {statuses}"
         elif row["type"] == "open_ended" and "cascade_score" in row:
             status = f"cascade {row['cascade_score']}/5 vs gemini {row['gemini_score']}/5"
         else:
@@ -461,7 +521,7 @@ def main():
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
-    report_md = build_report(rows, cascade_total_tokens, gemini_total_tokens)
+    report_md = build_report(rows, cascade_total_tokens, cascade_data.get("token_ledger", {}), gemini_totals)
     (args.out_dir / "comparison_report.md").write_text(report_md)
 
     (args.out_dir / "comparison_results.json").write_text(
