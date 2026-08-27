@@ -1,13 +1,13 @@
 # LLM Cascade Eval
 
 A weak-to-strong model cascade for code generation, with an evaluation harness
-that compares it against several Gemini evaluation conditions.
+that compares it against several Gemini usage conditions.
 
 ## What this is
 
 Instead of always calling the most expensive model, the cascade starts with a
-cheap/fast model and escalates through progressively stronger reviewers **only
-when needed**:
+cheap/fast model and escalates through progressively stronger reviewers
+**only when needed**:
 
 ```
 gemma4:cloud → gpt-oss:120b-cloud → nemotron-3-super:cloud → minimax-m3:cloud
@@ -25,9 +25,15 @@ For each problem:
 4. This repeats until a model AGREEs or the chain is exhausted at the
    strongest model.
 
-The idea: most problems don't need the most expensive model, but the ones
-that do should still get a correct answer rather than a cheap wrong one. The
-cascade's job is to spend extra tokens *only* on the problems that need it.
+**How to read the cascade.** From the caller's side, the cascade is a single
+system: one prompt in, one final answer out. The AGREE/EDIT/REWRITE hops are
+an internal escalation policy, not something the caller invokes or manages —
+in that sense it's no different from treating a single large model's internal
+routing or depth as opaque. The hop-by-hop trace is disclosed in this repo
+for inspection and evaluation, not because a user of the system would ever
+see or drive it directly. The design question this project is asking is: if
+you're only allowed one opaque call, does letting that call be backed by an
+internal escalation policy beat a single fixed-size model answering once?
 
 ## Repo layout
 
@@ -80,59 +86,93 @@ python3 gemini_conditions.py --problems-file all_questions.json \
 ```bash
 python3 cascade_spike.py
 ```
-This reads the Gemini condition files above when present, compares each final answer
-against the same tests, and writes `report/comparison_report.md` and
+This reads the Gemini condition files above when present, compares each final
+answer against the same tests, and writes `report/comparison_report.md` and
 `report/comparison_results.json`.
 
-## Results (pilot, n=4)
+## Results (pilot, n=3)
 
-This is a **small pilot**, not a benchmark — 4 code problems, run once. The
-numbers below are a proof of concept for the evaluation methodology and an
-early signal, not a statistically robust claim about cascade performance in
-general. See [Limitations](#limitations--next-steps) for what a real
-benchmark run would need.
+This is a **small pilot**, not a benchmark — 3 code problems, run once,
+constrained by API quota rather than by design (see
+[Limitations](#limitations--next-steps)). The numbers below are a proof of
+concept for the evaluation methodology and an early signal, not a
+statistically robust claim about cascade performance in general.
 
-**Pass@1:** Cascade 4/4 (100%) · Gemini 3.6 Flash 3/4 (75%)
+Four conditions are compared, execution-graded (pass/fail against each
+problem's test suite, no LLM judge involved):
 
-| Problem | Cascade | Gemini | Cascade tokens | Gemini tokens | Token delta |
-|---|---|---|---|---|---|
-| minimal_bracket_rebalance | ✅ | ✅ | 6120 | 1609 | +4511 |
-| collapse_runs | ✅ | ❌ | 1793 | 1123 | +670 |
-| merge_touching_intervals | ✅ | ✅ | 1794 | 2044 | −250 |
-| first_mismatch_index | ✅ | ✅ | 5489 | 2256 | +3233 |
+- **Cascade** — the system described above, one opaque call.
+- **one_shot** — Gemini 3.6 Flash, single call, no retries.
+- **blind_iter** — Gemini 3.6 Flash, allowed to retry on the same problem
+  without seeing the cascade's trace.
+- **context_iter** — Gemini 3.6 Flash, allowed to retry with the cascade's
+  hop trace as additional context.
 
-Scoring is fully objective for these problems: both systems' final code is
-executed against the same test suite (`check()` function), no judgment call
-involved — see [Methodology](#methodology).
+**Pass@1:** Cascade 3/3 (100%) · one_shot 2/3 (66.7%) · blind_iter 3/3 (100%)
+· context_iter 3/3 (100%)
+
+| Problem | Cascade | one_shot | blind_iter | context_iter | Cascade tokens | one_shot tokens | blind_iter tokens | context_iter tokens |
+|---|---|---|---|---|---|---|---|---|
+| weighted_interval_plan | ✅ | ❌ | ✅ | ✅ | 17049 | 1009 | 4367 | 3448 |
+| decode_nested_escapes | ✅ | ✅ | ✅ | ✅ | 3535 | 815 | 2060 | 2285 |
+| circular_minimax_partition | ✅ | ✅ | ✅ | ✅ | 3061 | 757 | 2251 | 2443 |
+
+**Token totals (whole run):** Cascade 23,645 · one_shot 2,581 · blind_iter
+8,678 · context_iter 8,176
+
+**Cascade by model:**
+
+| Model | Calls | Total tokens |
+|---|---:|---:|
+| gemma | 3 | 3,271 |
+| gptoss | 3 | 7,953 |
+| nemotron | 1 | 12,421 |
 
 **Reading the results honestly:**
-- **`collapse_runs`** is the one case where the cascade's escalation actually
-  changed the outcome — Gemini's single-shot answer failed, the cascade's
-  review step caught and fixed it, for +670 tokens. This is the core value
-  proposition working as intended.
-- **`merge_touching_intervals`** — both passed, and the cascade used *fewer*
-  tokens than Gemini. The first model in the chain got it right immediately,
-  so the cascade stopped early rather than escalating unnecessarily. This
-  matters as much as the win above: it shows the routing isn't just "always
-  spend more."
-- **`minimal_bracket_rebalance`** and **`first_mismatch_index`** — both
-  systems passed, but the cascade spent considerably more tokens (+4511,
-  +3233) for no accuracy gain. This is real overhead, not hidden here: on
-  problems the weak model already gets right, review hops that don't AGREE
-  immediately cost tokens without changing the final answer.
 
-Net: in this pilot, the cascade traded a meaningful token overhead on 2/4
-problems for a correctness win on 1/4 and a cheaper-and-correct result on
-1/4. Whether that trade is worth it in general is exactly what a larger
-benchmark run would tell you — this pilot shows the mechanism working, not
-yet its overall cost-effectiveness at scale.
+- **The cascade beat ungoverned single-shot use (2/3) and matched both
+  iterated-Gemini conditions (3/3 each).** The one problem that separates the
+  conditions, `weighted_interval_plan`, is the clean example: one_shot Gemini
+  got it wrong on its only attempt, while the cascade's internal escalation
+  — and Gemini's *external* retry mechanisms in blind_iter/context_iter — all
+  recovered the correct answer.
+- **This means the cascade's actual advantage is over ungoverned single-shot
+  use, not over Gemini with retry logic already built around it.** Once
+  Gemini is given a retry budget (blind or context-aware), it matches the
+  cascade on correctness in this pilot. The interesting claim here is
+  narrower and more honest than "cascade beats Gemini": *a single opaque call
+  to the cascade gets you what an external harness would otherwise need to
+  build (multiple calls, a retry policy, a stopping condition) to get out of
+  a single fixed-size model.*
+- **The cascade is not cheaper.** On the hard problem, cascade spent 17,049
+  tokens — nearly all of it (12,421) in escalating to `nemotron`, the
+  strongest model in the chain — against 3,448–4,367 tokens for Gemini's
+  iterated conditions to reach the same correct answer. Total run cost
+  favors every Gemini condition by 2.7–9x. Any claim about the cascade's
+  value has to rest on something other than raw token cost: not requiring an
+  external caller to design and tune a retry policy, and not depending on
+  any single model's failure mode to trigger that policy.
+- **The cascade's cost is plausibly explained by capacity, not compared
+  against it 1:1.** The chain draws on a strictly larger pool of total model
+  capacity than a single Flash-class model call — this is a reasonable
+  explanation for why escalation is expensive when it happens, not a
+  justification that the expense doesn't matter. Model parameter counts
+  across separate sequential calls don't compose into one larger model's
+  capability; they represent independent attempts with a stopping rule.
+
+Net: in this pilot, the cascade's escalation is triggered automatically and
+without an external harness having to decide when to retry, and it recovers
+the one case where a single ungoverned call fails — but it does this at
+meaningfully higher token cost than achieving the same correctness through
+governed Gemini retries. Both the correctness parity and the cost gap are
+the finding; neither should be reported without the other.
 
 ## Methodology
 
 **Code problems** (have a `check` function + `entry_point` in
-`all_questions.json`): scored by executing both systems' final code against
-the identical test suite. No LLM judgment is involved in scoring these —
-it's pass/fail by execution, same as CI.
+`all_questions.json`): scored by executing each condition's final code
+against the identical test suite. No LLM judgment is involved in scoring
+these — it's pass/fail by execution, same as CI.
 
 **Open-ended problems** (not yet in this pilot's problem set, but supported
 by `cascade_spike.py` — mark with `"type": "open_ended"`, no `check`/
@@ -154,28 +194,39 @@ Judging is:
   yet run, since this pilot has no open-ended problems — to be filled in
   once the problem set is expanded.)
 
-Default judge model: `qwen3.5:397b-cloud` — chosen because it's a different model
-family/lab than everything else being compared or used in the chain.
+Default judge model: `qwen3.5:397b-cloud` — chosen because it's a different
+model family/lab than everything else being compared or used in the chain.
 
 ## Limitations & next steps
 
-- **Sample size.** n=4 is a pilot to validate the evaluation pipeline, not a
-  result to generalize from. A meaningful benchmark needs on the order of
-  15–30+ problems, ideally spanning difficulty levels, to make the pass-rate
-  and token-delta numbers statistically meaningful rather than anecdotal.
+- **Sample size.** n=3 is a pilot to validate the evaluation pipeline, not a
+  result to generalize from. It's constrained by API quota limits during
+  development, not a deliberate scope choice — a meaningful benchmark needs
+  on the order of 15–30+ problems, ideally spanning difficulty levels, to
+  make the pass-rate and token-delta numbers statistically meaningful rather
+  than anecdotal.
+- **Reducing cascade token cost while preserving correctness is an explicit
+  future goal, not yet attempted.** This pilot establishes the correctness
+  case (parity with governed Gemini retries, a win over ungoverned
+  single-shot use); it does not yet establish cost-competitiveness. Next
+  steps include tighter per-hop prompts, early-exit heuristics so weaker
+  models can decline to escalate with more precision, and cheaper review
+  passes for hops that historically AGREE quickly. The goal is to keep the
+  3/3 correctness result while closing the token gap toward Gemini's
+  iterated conditions, not just documenting the gap as-is.
 - **No open-ended problems yet.** The current problem set is 100% code
   generation. The judge pipeline is built and tested but has no real data to
   report on — adding open-ended reasoning/explanation questions is the
   natural next step, and would need the manual audit-sample step actually
   run and its agreement rate reported.
 - **Cascade token cost isn't fully apples-to-apples.** Cascade tokens reflect
-  every hop across the chain (up to 4 model calls); Gemini tokens reflect a
-  single call. This is disclosed rather than normalized away, since
-  collapsing it into one ratio would hide exactly the overhead-vs-win
-  tradeoff that's the actual finding here.
-- **Single run, temperature 0.2 (cascade) / default (Gemini).** No
-  repeated-sampling variance analysis yet — a single pass@1 number per
-  problem could shift on a re-run given non-zero temperature.
+  every hop across the chain (up to 4 model calls); Gemini conditions reflect
+  1 or more calls depending on condition. This is disclosed rather than
+  normalized away, since collapsing it into one ratio would hide exactly the
+  overhead-vs-parity tradeoff that's the actual finding here.
+- **Single run, fixed temperature settings.** No repeated-sampling variance
+  analysis yet — a single pass@1 number per problem could shift on a re-run
+  given non-zero temperature.
 - **Free-tier model availability.** Both the cascade's cloud models and the
   suggested judge model depend on Ollama's free-tier catalog, which changes
   over time. `--judge-model` is a CLI flag specifically so this doesn't
