@@ -129,6 +129,17 @@ The report is written to `report/comparison_report.md` and the machine-readable 
 
 This is a **small pilot**, not a benchmark — 3 code problems, run once, constrained by API quota rather than by design (see [Limitations](#limitations--next-steps)). The numbers below are a proof of concept for the evaluation methodology and an early signal, not a statistically robust claim about cascade performance in general.
 
+**Important:** The code-question report shown below was generated with the
+initial Cascade configuration, before the current cloud-only model names were
+introduced. That report used this chain:
+
+```text
+gemma -> gpt-oss:120b -> nemotron-3-super -> minimax-m3
+```
+
+The results below should therefore be treated as results from that initial
+configuration. They are not results from the current chain documented above.
+
 Four conditions are compared, execution-graded (pass/fail against each problem's test suite, no LLM judge involved):
 
 - **Cascade** — the system described above, one opaque call.
