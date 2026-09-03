@@ -17,14 +17,14 @@ except ImportError:
     ollama = None
 
 EXEC_TIMEOUT_S = 5
-DEFAULT_JUDGE_MODEL = "qwen3.5:397b-cloud"
+DEFAULT_JUDGE_MODEL = "gpt-oss:120b-cloud"
 
 INELIGIBLE_JUDGE_MODELS = {
     "gemma4:cloud",
     "nemotron-3-super:cloud",
-    "gpt-oss:120b-cloud",
-    "minimax-m3:cloud",
-    "gemini-3.6-flash",
+    "gpt-oss:20b-cloud",
+    "nemotron-3-ultra:cloud",
+    "gemini-3.6-flash"
 }
 
 def _isolate_function(block: str, entry_point: str) -> str:
@@ -114,10 +114,15 @@ def index_problems(problems: list[dict]) -> dict[str, dict]:
     return {p["id"]: p for p in problems}
 
 
-def index_cascade_results(cascade_data: dict) -> dict[str, dict]:
-    """spike_results.json -> {problem_id: result}"""
-    results = cascade_data.get("results", cascade_data if isinstance(cascade_data, list) else [])
-    return {r["id"]: r for r in results}
+def index_cascade_results(cascade_data: Any) -> dict[str, dict]:
+    """Accept either a list of results or the legacy dict wrapper from spike_results.json."""
+    if isinstance(cascade_data, dict):
+        results = cascade_data.get("results", [])
+    elif isinstance(cascade_data, list):
+        results = cascade_data
+    else:
+        results = []
+    return {r["id"]: r for r in results if isinstance(r, dict) and "id" in r}
 
 
 def index_gemini_results(gemini_data: Any) -> dict[str, dict]:
@@ -139,6 +144,11 @@ def gemini_code(result: Optional[dict], entry_point: str) -> str:
 def gemini_tokens(result: Optional[dict]) -> Optional[int]:
     if not result:
         return None
+    usage = result.get("usage")
+    if isinstance(usage, dict):
+        total = usage.get("total_tokens")
+        if total is not None:
+            return total
     return result.get("tokens", result.get("total_tokens"))
 
 
@@ -168,6 +178,8 @@ JUDGE_SYSTEM = (
     "  - correctness (0-2): factually/logically correct, no errors\n"
     "  - completeness (0-2): fully answers what was asked, no major gaps\n"
     "  - clarity (0-1): well-organized and easy to follow\n\n"
+    "Also give a fuzzy preference between A and B, as a percentage split that sums to 100.\n"
+    "Example: if you prefer A a bit more, use A_PREFERENCE: 61 and B_PREFERENCE: 39.\n\n"
     "Respond in EXACTLY this format, nothing else:\n"
     "A_CORRECTNESS: <0-2>\n"
     "A_COMPLETENESS: <0-2>\n"
@@ -175,6 +187,8 @@ JUDGE_SYSTEM = (
     "B_CORRECTNESS: <0-2>\n"
     "B_COMPLETENESS: <0-2>\n"
     "B_CLARITY: <0-1>\n"
+    "A_PREFERENCE: <0-100>\n"
+    "B_PREFERENCE: <0-100>\n"
     "REASONING: <one or two sentences>"
 )
 
@@ -192,6 +206,8 @@ def judge_prompt(question: str, resp_a: str, resp_b: str) -> str:
 class JudgeScore:
     a_total: float
     b_total: float
+    a_pref: int
+    b_pref: int
     raw: str
     reasoning: str = ""
 
@@ -199,8 +215,9 @@ class JudgeScore:
 def parse_judge_response(text: str) -> Optional[JudgeScore]:
     fields = {}
     for key in ("A_CORRECTNESS", "A_COMPLETENESS", "A_CLARITY",
-                "B_CORRECTNESS", "B_COMPLETENESS", "B_CLARITY"):
-        m = re.search(rf"{key}\s*:\s*(\d)", text)
+                "B_CORRECTNESS", "B_COMPLETENESS", "B_CLARITY",
+                "A_PREFERENCE", "B_PREFERENCE"):
+        m = re.search(rf"{key}\s*:\s*(\d+)", text)
         if not m:
             return None
         fields[key] = int(m.group(1))
@@ -210,7 +227,14 @@ def parse_judge_response(text: str) -> Optional[JudgeScore]:
 
     a_total = fields["A_CORRECTNESS"] + fields["A_COMPLETENESS"] + fields["A_CLARITY"]
     b_total = fields["B_CORRECTNESS"] + fields["B_COMPLETENESS"] + fields["B_CLARITY"]
-    return JudgeScore(a_total=a_total, b_total=b_total, raw=text, reasoning=reasoning)
+    return JudgeScore(
+        a_total=a_total,
+        b_total=b_total,
+        a_pref=fields["A_PREFERENCE"],
+        b_pref=fields["B_PREFERENCE"],
+        raw=text,
+        reasoning=reasoning,
+    )
 
 
 def call_judge(client, judge_model: str, question: str, resp_a: str, resp_b: str) -> JudgeScore:
@@ -259,11 +283,21 @@ def judge_open_ended(
     cascade_score = score.a_total if cascade_is_a else score.b_total
     gemini_score = score.b_total if cascade_is_a else score.a_total
 
+    cascade_pref = score.a_pref if cascade_is_a else score.b_pref
+    gemini_pref = score.b_pref if cascade_is_a else score.a_pref
+    tie = abs(cascade_pref - gemini_pref) <= 2
+    cascade_won = (not tie) and (cascade_pref > gemini_pref)
+
     return {
         "judge_model": judge_model,
         "cascade_score": cascade_score,
         "gemini_score": gemini_score,
         "cascade_was_label": "A" if cascade_is_a else "B",
+        "cascade_pref_pct": cascade_pref,
+        "gemini_pref_pct": gemini_pref,
+        "cascade_won": cascade_won,
+        "tie": tie,
+        "preference_margin_pct": abs(cascade_pref - gemini_pref),
         "reasoning": score.reasoning,
         "raw_judge_response": score.raw,
     }
@@ -313,12 +347,25 @@ def compare_problem(
             row[f"{condition}_error"] = error
             row[f"{condition}_tokens"] = gemini_tokens(result)
     else:
-        cascade_text = cascade_result.get("final_code", "") if cascade_result else ""
+        cascade_text = (
+            cascade_result.get("final_code", cascade_result.get("final_answer", cascade_result.get("response_text", "")))
+            if cascade_result else ""
+        )
         for condition, result in gemini_results.items():
             if cascade_result and result:
-                gemini_text = result.get("final_code", result.get("response_text", ""))
+                gemini_text = result.get("final_code", result.get("final_answer", result.get("response_text", "")))
                 judged = judge_open_ended(problem, cascade_text, gemini_text, judge_model, rng)
                 row[f"{condition}_judged"] = judged
+                row[f"{condition}_score"] = judged.get("cascade_score")
+                row[f"{condition}_winner"] = "Cascade" if judged.get("cascade_won") else "Gemini" if not judged.get("tie") else "Tie"
+                row["cascade_score"] = judged.get("cascade_score")
+                row["gemini_score"] = judged.get("gemini_score")
+                row["cascade_won"] = judged.get("cascade_won")
+                row["tie"] = judged.get("tie")
+                row["cascade_pref_pct"] = judged.get("cascade_pref_pct")
+                row["gemini_pref_pct"] = judged.get("gemini_pref_pct")
+                row["preference_margin_pct"] = judged.get("preference_margin_pct")
+                row["judge_model"] = judge_model
             else:
                 row[f"{condition}_judge_skipped_reason"] = "missing cascade or Gemini result"
 
@@ -393,21 +440,26 @@ def build_report(
             f"- Cascade wins: {cascade_wins}/{len(judged)}  |  "
             f"Gemini wins: {gemini_wins}/{len(judged)}  |  Ties: {ties}/{len(judged)}",
             "",
-            "| Problem | Cascade score | Gemini score | Winner |",
-            "|---|---|---|---|",
+            "| Problem | Cascade score | Gemini score | Preference | Winner |",
+            "|---|---:|---:|---:|---|",
         ]
         for r in judged:
             winner = "Tie" if r.get("tie") else ("Cascade" if r.get("cascade_won") else "Gemini")
+            pref = "Tie"
+            if not r.get("tie"):
+                pref = (
+                    f"Cascade +{r.get('cascade_pref_pct', 50)}%"
+                    if r.get("cascade_won")
+                    else f"Gemini +{r.get('gemini_pref_pct', 50)}%"
+                )
             lines.append(
-                f"| {r['id']} | {r['cascade_score']}/5 | {r['gemini_score']}/5 | {winner} |"
+                f"| {r['id']} | {r['cascade_score']}/5 | {r['gemini_score']}/5 | {pref} | {winner} |"
             )
         lines += [
             "",
             "> Judging is blinded (responses labeled A/B, order randomized per question) "
-            "and rubric-based (correctness/completeness/clarity). See raw_judge_response "
-            "in the JSON output for full reasoning per question. A manual audit sample "
-            "should be spot-checked against these scores before citing this result "
-            "(see --audit-sample).",
+            "and rubric-based (correctness/completeness/clarity), with a fuzzy percentage preference "
+            "between the two responses. See raw_judge_response in the JSON output for the full judge text.",
             "",
         ]
 
@@ -415,10 +467,10 @@ def build_report(
         "## Token totals (whole run)",
         "",
         f"- Cascade total tokens: {cascade_total_tokens}",
-        "",
     ]
     for condition, total in gemini_totals.items():
-        lines.insert(-1, f"- {condition} total tokens: {total}")
+        lines.append(f"- {condition} total tokens: {total}")
+    lines += ["",]
     lines += [
         "",
         "### Cascade by model",
@@ -454,6 +506,14 @@ def parse_args():
                     help="Gemini blind-iteration result file")
     p.add_argument("--gemini-context", type=Path, default=Path("gemini_context_results.json"),
                     help="Gemini context-iteration result file")
+    p.add_argument("--open-ended-problems", type=Path, default=None,
+                    help="Optional separate problem set containing open-ended questions only.")
+    p.add_argument("--open-ended-cascade-results", type=Path, default=Path("open_ended/cascade_answers.json"),
+                    help="Cascade answer file for open-ended problems (default: open_ended/cascade_answers.json)")
+    p.add_argument("--open-ended-gemini-results", type=Path, default=Path("open_ended/gemini_answers.json"),
+                    help="Gemini answer file for open-ended problems (default: open_ended/gemini_answers.json)")
+    p.add_argument("--open-ended-out-dir", type=Path, default=Path("open_ended/report"),
+                    help="Output directory for the separate open-ended judge report.")
     p.add_argument("--judge-model", type=str, default=DEFAULT_JUDGE_MODEL,
                     help=f"Third-party judge for open-ended problems (default: {DEFAULT_JUDGE_MODEL}). "
                          f"Must NOT be a model used inside either system under test.")
@@ -468,18 +528,27 @@ def main():
     args = parse_args()
     rng = random.Random(args.seed)
 
-    problems = load_json(args.problems)
-    problems_by_id = index_problems(problems)
+    if args.open_ended_problems is not None:
+        problems = load_json(args.open_ended_problems)
+        problems_by_id = index_problems(problems)
+        cascade_data = load_json(args.open_ended_cascade_results)
+        cascade_by_id = index_cascade_results(cascade_data)
+        cascade_total_tokens = 0
+        gemini_paths = {"judge_only": args.open_ended_gemini_results}
+        out_dir = args.open_ended_out_dir
+    else:
+        problems = load_json(args.problems)
+        problems_by_id = index_problems(problems)
+        cascade_data = load_json(args.cascade_results)
+        cascade_by_id = index_cascade_results(cascade_data)
+        cascade_total_tokens = cascade_data.get("total_tokens", 0)
+        gemini_paths = {
+            "one_shot": args.gemini_results or args.gemini_one_shot,
+            "blind_iter": args.gemini_blind,
+            "context_iter": args.gemini_context,
+        }
+        out_dir = args.out_dir
 
-    cascade_data = load_json(args.cascade_results)
-    cascade_by_id = index_cascade_results(cascade_data)
-    cascade_total_tokens = cascade_data.get("total_tokens", 0)
-
-    gemini_paths = {
-        "one_shot": args.gemini_results or args.gemini_one_shot,
-        "blind_iter": args.gemini_blind,
-        "context_iter": args.gemini_context,
-    }
     gemini_by_condition = {}
     gemini_totals = {}
     for condition, path in gemini_paths.items():
@@ -519,12 +588,13 @@ def main():
             status = row.get("error", "skipped")
         print(f"  scored {problem_id} ({row['type']}) -> {status}")
 
-    args.out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    report_md = build_report(rows, cascade_total_tokens, cascade_data.get("token_ledger", {}), gemini_totals)
-    (args.out_dir / "comparison_report.md").write_text(report_md)
+    cascade_token_ledger = cascade_data.get("token_ledger", {}) if isinstance(cascade_data, dict) else {}
+    report_md = build_report(rows, cascade_total_tokens, cascade_token_ledger, gemini_totals)
+    (out_dir / "comparison_report.md").write_text(report_md)
 
-    (args.out_dir / "comparison_results.json").write_text(
+    (out_dir / "comparison_results.json").write_text(
         json.dumps({"rows": rows, "judge_model": args.judge_model, "seed": args.seed}, indent=2, default=str)
     )
 
@@ -532,16 +602,16 @@ def main():
     if judged_rows and args.audit_sample > 0:
         k = max(1, round(len(judged_rows) * args.audit_sample))
         audit_ids = [r["id"] for r in rng.sample(judged_rows, k)]
-        (args.out_dir / "audit_sample.json").write_text(
+        (out_dir / "audit_sample.json").write_text(
             json.dumps({"instructions": "Manually review these judged items and record "
                         "whether you agree with the judge's winner. Report the agreement "
                         "rate in your README.", "ids": audit_ids}, indent=2)
         )
         print(f"\nAudit sample written: {k}/{len(judged_rows)} judged items "
-              f"flagged in {args.out_dir / 'audit_sample.json'}")
+              f"flagged in {out_dir / 'audit_sample.json'}")
 
-    print(f"\nReport written to {args.out_dir / 'comparison_report.md'}")
-    print(f"Raw results written to {args.out_dir / 'comparison_results.json'}")
+    print(f"\nReport written to {out_dir / 'comparison_report.md'}")
+    print(f"Raw results written to {out_dir / 'comparison_results.json'}")
 
 
 if __name__ == "__main__":

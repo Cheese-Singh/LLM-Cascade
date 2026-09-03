@@ -1,0 +1,87 @@
+{
+  "rows": [
+    {
+      "id": "binary_search_explained",
+      "type": "open_ended",
+      "judge_only_judged": {
+        "judge_model": "gpt-oss:120b-cloud",
+        "cascade_score": 5,
+        "gemini_score": 5,
+        "cascade_was_label": "B",
+        "cascade_pref_pct": 45,
+        "gemini_pref_pct": 55,
+        "cascade_won": false,
+        "tie": false,
+        "preference_margin_pct": 10,
+        "reasoning": "Both answers are factually correct, fully address why binary search works on a sorted list and why it outperforms linear search, and are clearly presented. Response\u202fA adds concrete analogies and step\u2011by\u2011step numeric examples that may be more helpful to a beginner, giving it a slight edge.",
+        "raw_judge_response": "A_CORRECTNESS: 2  \nA_COMPLETENESS: 2  \nA_CLARITY: 1  \nB_CORRECTNESS: 2  \nB_COMPLETENESS: 2  \nB_CLARITY: 1  \nA_PREFERENCE: 55  \nB_PREFERENCE: 45  \nREASONING: Both answers are factually correct, fully address why binary search works on a sorted list and why it outperforms linear search, and are clearly presented. Response\u202fA adds concrete analogies and step\u2011by\u2011step numeric examples that may be more helpful to a beginner, giving it a slight edge."
+      },
+      "judge_only_score": 5,
+      "judge_only_winner": "Gemini",
+      "cascade_score": 5,
+      "gemini_score": 5,
+      "cascade_won": false,
+      "tie": false,
+      "cascade_pref_pct": 45,
+      "gemini_pref_pct": 55,
+      "preference_margin_pct": 10,
+      "judge_model": "gpt-oss:120b-cloud"
+    },
+    {
+      "id": "inflation_tradeoff",
+      "type": "open_ended",
+      "judge_only_judged": {
+        "judge_model": "gpt-oss:120b-cloud",
+        "cascade_score": 5,
+        "gemini_score": 4,
+        "cascade_was_label": "A",
+        "cascade_pref_pct": 65,
+        "gemini_pref_pct": 35,
+        "cascade_won": true,
+        "tie": false,
+        "preference_margin_pct": 30,
+        "reasoning": "Both answers are factually accurate, but Response A offers a broader set of reasons (including fiscal sustainability, income distribution, and competitiveness) and presents them in a concise table, making it more complete and slightly clearer overall. Response B is clear but covers fewer concrete reasons, so it scores slightly lower on completeness.",
+        "raw_judge_response": "A_CORRECTNESS: 2\nA_COMPLETENESS: 2\nA_CLARITY: 1\nB_CORRECTNESS: 2\nB_COMPLETENESS: 1\nB_CLARITY: 1\nA_PREFERENCE: 65\nB_PREFERENCE: 35\nREASONING: Both answers are factually accurate, but Response A offers a broader set of reasons (including fiscal sustainability, income distribution, and competitiveness) and presents them in a concise table, making it more complete and slightly clearer overall. Response B is clear but covers fewer concrete reasons, so it scores slightly lower on completeness."
+      },
+      "judge_only_score": 5,
+      "judge_only_winner": "Cascade",
+      "cascade_score": 5,
+      "gemini_score": 4,
+      "cascade_won": true,
+      "tie": false,
+      "cascade_pref_pct": 65,
+      "gemini_pref_pct": 35,
+      "preference_margin_pct": 30,
+      "judge_model": "gpt-oss:120b-cloud"
+    },
+    {
+      "id": "learn_new_tech",
+      "type": "open_ended",
+      "judge_only_judged": {
+        "judge_model": "gpt-oss:120b-cloud",
+        "cascade_score": 5,
+        "gemini_score": 5,
+        "cascade_was_label": "A",
+        "cascade_pref_pct": 55,
+        "gemini_pref_pct": 45,
+        "cascade_won": true,
+        "tie": false,
+        "preference_margin_pct": 10,
+        "reasoning": "Both answers are factually correct, fully address practice, debugging, and readiness, and are clearly organized. A\u2019s tabular phases and concrete readiness tests give it a slight edge in practical usability.",
+        "raw_judge_response": "A_CORRECTNESS: 2  \nA_COMPLETENESS: 2  \nA_CLARITY: 1  \nB_CORRECTNESS: 2  \nB_COMPLETENESS: 2  \nB_CLARITY: 1  \nA_PREFERENCE: 55  \nB_PREFERENCE: 45  \nREASONING: Both answers are factually correct, fully address practice, debugging, and readiness, and are clearly organized. A\u2019s tabular phases and concrete readiness tests give it a slight edge in practical usability."
+      },
+      "judge_only_score": 5,
+      "judge_only_winner": "Cascade",
+      "cascade_score": 5,
+      "gemini_score": 5,
+      "cascade_won": true,
+      "tie": false,
+      "cascade_pref_pct": 55,
+      "gemini_pref_pct": 45,
+      "preference_margin_pct": 10,
+      "judge_model": "gpt-oss:120b-cloud"
+    }
+  ],
+  "judge_model": "gpt-oss:120b-cloud",
+  "seed": 42
+}

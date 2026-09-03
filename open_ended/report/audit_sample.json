@@ -1,0 +1,6 @@
+{
+  "instructions": "Manually review these judged items and record whether you agree with the judge's winner. Report the agreement rate in your README.",
+  "ids": [
+    "binary_search_explained"
+  ]
+}

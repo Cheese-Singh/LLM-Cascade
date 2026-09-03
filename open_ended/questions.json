@@ -1,0 +1,17 @@
+[
+  {
+    "id": "binary_search_explained",
+    "type": "open_ended",
+    "prompt": "Explain in plain language why binary search works on a sorted list and why it is faster than linear search. Keep the answer accessible to a beginner, but be precise enough to show the underlying idea."
+  },
+  {
+    "id": "inflation_tradeoff",
+    "type": "open_ended",
+    "prompt": "Why do governments and central banks care about inflation? Give a few concrete reasons, explain the trade-offs, and describe what can go wrong if inflation is too high or too low."
+  },
+  {
+    "id": "learn_new_tech",
+    "type": "open_ended",
+    "prompt": "Describe a practical process for learning a new programming concept or tool without relying on memorization alone. Include how to practice, how to debug mistakes, and how to know when you are ready to build something real with it."
+  }
+]

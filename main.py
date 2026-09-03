@@ -15,11 +15,11 @@ CLIENT = ollama.Client()
 MODELS = {
     "gemma": "gemma4:cloud",
     "nemotron": "nemotron-3-super:cloud",
-    "gptoss": "gpt-oss:120b-cloud",
-    "minimax": "minimax-m3:cloud",
+    "gptoss": "gpt-oss:20b-cloud",
+    "nemotron-ultra": "nemotron-3-ultra:cloud",
 }
 
-CHAIN_ORDER = ["gemma", "gptoss", "nemotron", "minimax"]
+CHAIN_ORDER = ["gptoss", "gemma", "nemotron", "nemotron-ultra"]
 
 EXEC_TIMEOUT_S = 5
 DEFAULT_PROBLEMS_FILE = Path(__file__).parent / "all_questions.json"
@@ -128,7 +128,7 @@ def build_custom_problem(prompt_text: str, check_text: str, entry_point: str) ->
 
 
 def call_ollama(model_key, system_prompt, user_prompt, temperature=0.2):
-    model_name = MODELS[model_key]
+    model_name = MODELS.get(model_key, model_key)
     try:
         response = CLIENT.chat(
             model=model_name,
