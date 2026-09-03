@@ -1,10 +1,10 @@
 # LLM Cascade Evaluation
 
-A Python evaluation project for comparing a weak-to-strong Ollama model cascade
-against Gemini. It supports both executable code-generation problems and a
-separate open-ended question workflow.
+A weak-to-strong model cascade for code generation and evaluation. This repository contains a Python evaluation project that compares a weak-to-strong Ollama model cascade against Gemini; it supports executable code-generation problems and a separate open-ended question workflow.
 
 ## What it does
+
+Instead of always calling the most expensive model, the cascade starts with a cheap/fast model and escalates through progressively stronger reviewers **only when needed**:
 
 ### Code benchmark
 
@@ -22,6 +22,8 @@ gpt-oss:20b-cloud -> gemma4:cloud -> nemotron-3-super:cloud -> nemotron-3-ultra:
 The cascade stops when a review returns `AGREE`, or when it reaches the end of
 the chain. Token usage is recorded per problem, per model, and for the whole
 run.
+
+**How to read the cascade.** From the caller's side, the cascade is a single system: one prompt in, one final answer out. The AGREE/EDIT/REWRITE hops are an internal escalation policy, not something the caller invokes or manages — in that sense it's no different from treating a single large model's internal routing or depth as opaque. The hop-by-hop trace is disclosed in this repo for inspection and evaluation, not because a user of the system would ever see or drive it directly. The design question this project is asking is: if you're only allowed one opaque call, does letting that call be backed by an internal escalation policy beat a single fixed-size model answering once?
 
 ### Open-ended benchmark
 
@@ -121,31 +123,49 @@ Create the code comparison report:
 ```bash
 python3 cascade_spike.py
 ```
+The report is written to `report/comparison_report.md` and the machine-readable results to `report/comparison_results.json`.
 
-The report is written to `report/comparison_report.md` and the machine-readable
-results to `report/comparison_results.json`.
+## Results (pilot, n=3)
 
-## Run the open-ended benchmark
+This is a **small pilot**, not a benchmark — 3 code problems, run once, constrained by API quota rather than by design (see [Limitations](#limitations--next-steps)). The numbers below are a proof of concept for the evaluation methodology and an early signal, not a statistically robust claim about cascade performance in general.
 
-### 1. Generate Cascade answers
+Four conditions are compared, execution-graded (pass/fail against each problem's test suite, no LLM judge involved):
 
-```bash
-python3 run_open_ended_cascade.py \
-  --questions-file open_ended/questions.json \
-  --output open_ended/cascade_answers.json
-```
+- **Cascade** — the system described above, one opaque call.
+- **one_shot** — Gemini 3.6 Flash, single call, no retries.
+- **blind_iter** — Gemini 3.6 Flash, allowed to retry on the same problem without seeing the cascade's trace.
+- **context_iter** — Gemini 3.6 Flash, allowed to retry with the cascade's hop trace as additional context.
 
-For a quick connectivity test using only the first model:
+**Pass@1:** Cascade 3/3 (100%) · one_shot 2/3 (66.7%) · blind_iter 3/3 (100%) · context_iter 3/3 (100%)
 
-```bash
-python3 run_open_ended_cascade.py --single-model
-```
+| Problem | Cascade | one_shot | blind_iter | context_iter | Cascade tokens | one_shot tokens | blind_iter tokens | context_iter tokens |
+|---|---|---|---|---|---|---|---|---|
+| weighted_interval_plan | ✅ | ❌ | ✅ | ✅ | 17049 | 1009 | 4367 | 3448 |
+| decode_nested_escapes | ✅ | ✅ | ✅ | ✅ | 3535 | 815 | 2060 | 2285 |
+| circular_minimax_partition | ✅ | ✅ | ✅ | ✅ | 3061 | 757 | 2251 | 2443 |
 
-The normal run prints the active question, each model hop, each `AGREE`/
-`EDIT`/`REWRITE` verdict, tokens for every call, tokens by model, and the final
-answer.
+**Token totals (whole run):** Cascade 23,645 · one_shot 2,581 · blind_iter 8,678 · context_iter 8,176
+
+**Cascade by model:**
+
+| Model | Calls | Total tokens |
+|---|---:|---:|
+| gemma | 3 | 3,271 |
+| gptoss | 3 | 7,953 |
+| nemotron | 1 | 12,421 |
+
+**Reading the results honestly:**
+
+- **The cascade beat ungoverned single-shot use (2/3) and matched both iterated-Gemini conditions (3/3 each).** The one problem that separates the conditions, `weighted_interval_plan`, is the clean example: one_shot Gemini got it wrong on its only attempt, while the cascade's internal escalation — and Gemini's *external* retry mechanisms in blind_iter/context_iter — all recovered the correct answer.
+- **This means the cascade's actual advantage is over ungoverned single-shot use, not over Gemini with retry logic already built around it.** Once Gemini is given a retry budget (blind or context-aware), it matches the cascade on correctness in this pilot. The interesting claim here is narrower and more honest than "cascade beats Gemini": *a single opaque call to the cascade gets you what an external harness would otherwise need to build (multiple calls, a retry policy, a stopping condition) to get out of a single fixed-size model.*
+- **The cascade is not cheaper.** On the hard problem, cascade spent 17,049 tokens — nearly all of it (12,421) in escalating to `nemotron`, the strongest model in the chain — against 3,448–4,367 tokens for Gemini's iterated conditions to reach the same correct answer. Total run cost favors every Gemini condition by 2.7–9x. Any claim about the cascade's value has to rest on something other than raw token cost: not requiring an external caller to design and tune a retry policy, and not depending on any single model's failure mode to trigger that policy.
+- **The cascade's cost is plausibly explained by capacity, not compared against it 1:1.** The chain draws on a strictly larger pool of total model capacity than a single Flash-class model call — this is a reasonable explanation for why escalation is expensive when it happens, not a justification that the expense doesn't matter. Model parameter counts across separate sequential calls don't compose into one larger model's capability; they represent independent attempts with a stopping rule.
+
+Net: in this pilot, the cascade's escalation is triggered automatically and without an external harness having to decide when to retry, and it recovers the one case where a single ungoverned call fails — but it does this at meaningfully higher token cost than achieving the same correctness through governed Gemini retries. Both the correctness parity and the cost gap are the finding; neither should be reported without the other.
 
 ### 2. Generate Gemini answers
+
+**Code problems** (have a `check` function + `entry_point` in `all_questions.json`): scored by executing each condition's final code against the identical test suite. No LLM judgment is involved in scoring these — it's pass/fail by execution, same as CI.
 
 ```bash
 python3 run_open_ended_gemini.py \
@@ -156,6 +176,8 @@ python3 run_open_ended_gemini.py \
 Each Gemini answer includes prompt, completion, and total token usage.
 
 ### 3. Judge Cascade against Gemini
+
+Default judge model: `qwen3.5:397b-cloud` — chosen because it's a different model family/lab than everything else being compared or used in the chain. Example command (you can override `--judge-model`):
 
 ```bash
 python3 cascade_spike.py \
@@ -172,60 +194,11 @@ This writes:
 - `open_ended/report/comparison_results.json`
 - `open_ended/report/audit_sample.json`
 
-The open-ended report includes per-question Cascade and Gemini rubric scores,
-winner, fuzzy preference percentage, Cascade token totals, and Gemini token
-totals.
-
-## Open-ended question format
-
-`open_ended/questions.json` is a JSON list. Each question needs an `id` and a
-`prompt`; `type` is optional but recommended:
-
-```json
-[
-  {
-    "id": "binary_search_explained",
-    "type": "open_ended",
-    "prompt": "Explain in plain language why binary search works."
-  }
-]
-```
-
-## Judging methodology
-
-The open-ended judge sees two responses labeled `A` and `B`; it does not see
-which one came from Cascade or Gemini, and the label assignment is randomized
-per question. It scores each response on:
-
-- correctness: 0-2
-- completeness: 0-2
-- clarity: 0-1
-
-It also returns a fuzzy preference split such as `A: 55%` and `B: 45%`.
-The report maps those percentages back to Cascade and Gemini after the blinded
-judgment. A difference of two percentage points or less is reported as a tie.
-
-The judge model must be independent of the systems being compared. The default
-is `gpt-oss:120b-cloud`; it is not used in the Cascade chain.
-
-## Validation
-
-Check Python syntax before running a long cloud evaluation:
-
-```bash
-python3 -m py_compile main.py cascade_spike.py \
-  run_open_ended_cascade.py run_open_ended_gemini.py
-```
-
-Cloud model response time depends on Ollama availability, account access, and
-model load. The open-ended cascade may use fewer than four model calls when a
-review returns `AGREE`.
-
 ## Limitations
 
-- Cloud model availability and pricing/access rules can change.
-- A single run is not a statistically robust benchmark.
-- Open-ended judge scores are an automated signal and should be checked against
-  the generated `audit_sample.json`.
-- Token counts are reported as returned by the Ollama and Gemini APIs; they are
-  not necessarily directly comparable across providers.
+- **Sample size.** n=3 is a pilot to validate the evaluation pipeline, not a result to generalize from. It's constrained by API quota limits during development, not a deliberate scope choice — a meaningful benchmark needs on the order of 15–30+ problems, ideally spanning difficulty levels, to make the pass-rate and token-delta numbers statistically meaningful rather than anecdotal.
+- **Reducing cascade token cost while preserving correctness is an explicit future goal, not yet attempted.** This pilot establishes the correctness case (parity with governed Gemini retries, a win over ungoverned single-shot use); it does not yet establish cost-competitiveness. Next steps include tighter per-hop prompts, early-exit heuristics so weaker models can decline to escalate with more precision, and cheaper review passes for hops that historically AGREE quickly. The goal is to keep the 3/3 correctness result while closing the token gap toward Gemini's iterated conditions, not just documenting the gap as-is.
+- **No open-ended problems yet.** The current problem set is 100% code generation. The judge pipeline is built and tested but has no real data to report on — adding open-ended reasoning/explanation questions is the natural next step, and would need the manual audit-sample step actually run and its agreement rate reported.
+- **Cascade token cost isn't fully apples-to-apples.** Cascade tokens reflect every hop across the chain (up to 4 model calls); Gemini conditions reflect 1 or more calls depending on condition. This is disclosed rather than normalized away, since collapsing it into one ratio would hide exactly the overhead-vs-parity tradeoff that's the actual finding here.
+- **Single run, fixed temperature settings.** No repeated-sampling variance analysis yet — a single pass@1 number per problem could shift on a re-run given non-zero temperature.
+- **Free-tier model availability.** Both the cascade's cloud models and the suggested judge model depend on Ollama's free-tier catalog, which changes over time. `--judge-model` is a CLI flag specifically so this doesn't require a code change if a model's access changes.
