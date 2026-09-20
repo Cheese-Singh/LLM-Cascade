@@ -9,15 +9,15 @@
 
 | Problem | Cascade | one_shot | blind_iter | context_iter | Cascade model tokens | Cascade tokens | one_shot tokens | blind_iter tokens | context_iter tokens |
 |---|---|---|---|---|---|---|---|---|---|
-| weighted_interval_plan | ✅ | ❌ | ✅ | ✅ | gemma: 1493, gptoss: 3135, nemotron: 12421 | 17049 | 1009 | 4367 | 3448 |
-| decode_nested_escapes | ✅ | ✅ | ✅ | ✅ | gemma: 854, gptoss: 2681 | 3535 | 815 | 2060 | 2285 |
-| circular_minimax_partition | ✅ | ✅ | ✅ | ✅ | gemma: 924, gptoss: 2137 | 3061 | 757 | 2251 | 2443 |
+| weighted_interval_plan | ✅ | ❌ | ✅ | ✅ | gptoss: 2660, gemma: 2777 | 5437 | 1009 | 4367 | 3448 |
+| decode_nested_escapes | ✅ | ✅ | ✅ | ✅ | gptoss: 1221 | 1221 | 815 | 2060 | 2285 |
+| circular_minimax_partition | ✅ | ✅ | ✅ | ✅ | gptoss: 2443 | 2443 | 757 | 2251 | 2443 |
 
 > Token columns are per-problem totals. Compare them alongside the pass/fail columns; a condition may improve correctness at additional cost.
 
 ## Token totals (whole run)
 
-- Cascade total tokens: 23645
+- Cascade total tokens: 9101
 - one_shot total tokens: 2581
 - blind_iter total tokens: 8678
 - context_iter total tokens: 8176
@@ -27,8 +27,7 @@
 
 | Model | Calls | Prompt tokens | Completion tokens | Total tokens |
 |---|---:|---:|---:|---:|
-| gemma | 3 | 1076 | 2195 | 3271 |
-| gptoss | 3 | 2990 | 4963 | 7953 |
-| nemotron | 1 | 1093 | 11328 | 12421 |
+| gptoss | 3 | 1185 | 5139 | 6324 |
+| gemma | 1 | 1320 | 1457 | 2777 |
 
 > Cascade tokens include every model hop. Gemini condition totals include all calls used by that condition.
