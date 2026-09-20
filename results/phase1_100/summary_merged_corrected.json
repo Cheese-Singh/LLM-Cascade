@@ -1,0 +1,24 @@
+{
+  "mode": "layer_1_only",
+  "timestamp": "2026-09-20T08:58:01.085977+00:00",
+  "n_records": 100,
+  "systems": {
+    "layer_1_only": {
+      "count": 100,
+      "accuracy": 0.9,
+      "error_rate": 0.09999999999999998,
+      "mean_tokens": 692.59,
+      "median_tokens": 548.5,
+      "mean_latency_ms": 5746.568713699817,
+      "median_latency_ms": 4402.8792704993975,
+      "escalation_rate": 0.0,
+      "strong_invocation_rate": 0.0,
+      "layer_invocation_rates": {
+        "layer_1": 1.0,
+        "layer_2": 0.0,
+        "layer_3": 0.0,
+        "layer_4": 0.0
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "mode": "execution_gated",
+  "timestamp": "2026-09-20T09:03:02.931253+00:00",
+  "n_records": 100,
+  "systems": {
+    "execution_gated": {
+      "count": 100,
+      "accuracy": 1.0,
+      "error_rate": 0.0,
+      "mean_tokens": 807.64,
+      "median_tokens": 581.0,
+      "mean_latency_ms": 6310.762863821292,
+      "median_latency_ms": 4605.365562514635,
+      "escalation_rate": 0.08,
+      "strong_invocation_rate": 0.0,
+      "layer_invocation_rates": {
+        "layer_1": 1.0,
+        "layer_2": 0.08,
+        "layer_3": 0.0,
+        "layer_4": 0.0
+      }
+    }
+  }
+}

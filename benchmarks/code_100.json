@@ -1,0 +1,602 @@
+[
+  {
+    "id": "weighted_interval_plan",
+    "prompt": "def weighted_interval_plan(jobs: list) -> list:\n    \"\"\"\n    Each job is a tuple (start, end, value), with start <= end. Choose a\n    subset of jobs with no overlap: a job ending at time t may coexist with a\n    job starting at time t, even if one or both of them have start == end\n    (zero duration). Return the original zero-based indices of the chosen\n    jobs, sorted in chronological (start-time) order.\n\n    Maximize total value first. Among plans with equal total value, choose\n    the plan with FEWER jobs. If still tied, choose the lexicographically\n    smallest list of original indices.\n\n    Two jobs overlap only if one's start is strictly less than the other's\n    end; touching endpoints (one job's end equals another's start) never\n    counts as overlap, regardless of whether either job has zero duration.\n    A zero-duration job (start == end) can therefore coexist with any job\n    whose interval touches that instant, including another zero-duration\n    job at the same instant.\n\n    Return [] for an empty input.\n    Do not mutate the input.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([(1,3,5),(3,5,5),(1,5,10)]) == [2]\n    assert candidate([(0,2,4),(2,4,4),(0,4,8)]) == [2]\n    assert candidate([(0,3,5),(3,6,5),(0,6,10)]) == [2]\n    assert candidate([(0,1,5),(1,2,5),(0,2,10),(2,2,0)]) == [2]\n    assert candidate([(0,0,7),(0,1,2),(1,1,3)]) == [0,1,2]\n    assert candidate([(5,7,0),(1,2,0),(2,4,0)]) == []\n    assert candidate([]) == []\n",
+    "entry_point": "weighted_interval_plan"
+  },
+    {
+    "id": "decode_nested_escapes",
+    "prompt": "def decode_nested_escapes(s: str) -> str:\n    \"\"\"\n    Decode a compact nested repetition language. A positive decimal integer\n    is ALWAYS immediately followed by '[text]' and means: repeat text that\n    many times. text may itself contain more repetitions.\n\n    Ordinary characters (anything not a digit, backslash, or bracket, and any digit\n    or bracket that has been escaped) are copied literally.\n\n    A backslash escapes exactly the next character, making it literal even\n    if it would otherwise be a digit, '[', ']', or another backslash.\n    Multi-digit counts are allowed (e.g. '10[x]').\n\n    The input is guaranteed valid: every digit run not itself escaped is\n    immediately followed by '[', brackets are balanced, counts are\n    positive, and every backslash has a following character.\n\n    >>> decode_nested_escapes('3[a2[c]]')\n    'accaccacc'\n    >>> decode_nested_escapes('2[1[ab]3[cd]]')\n    'abcdcdcdabcdcdcd'\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(r'3[a2[c]]') == 'accaccacc'\n    assert candidate(r'2[ab\\[c]') == 'ab[cab[c'\n    assert candidate(r'10[x]') == 'xxxxxxxxxx'\n    assert candidate(r'a2[b]c') == 'abbc'\n    assert candidate(r'2[3[a]b]') == 'aaabaaab'\n    assert candidate(r'4[\\]]') == ']]]]'\n    assert candidate(r'2[1[ab]3[cd]]') == 'abcdcdcdabcdcdcd'\n    assert candidate('') == ''\n    assert candidate(r'5[\\7]') == '77777'\n    assert candidate(r'2[\\\\]') == '\\\\\\\\'\n",
+    "entry_point": "decode_nested_escapes"
+  },
+  {
+    "id": "circular_minimax_partition",
+    "prompt": "def circular_minimax_partition(values: list, groups: int) -> int:\n    \"\"\"\n    Values are non-negative integers arranged in a circle. Cut the circle\n    into exactly `groups` nonempty contiguous segments. Segment sums include\n    every value exactly once. A segment may wrap from the end of the list to\n    the beginning. Rotating the circle is allowed, and segments are unlabeled,\n    so only the minimum possible maximum sum matters.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([4,1,2,3],2) == 5\n    assert candidate([8,1,1,8],2) == 9\n    assert candidate([10,1,1,1],2) == 10\n    assert candidate([5,5,5,5],3) == 10\n    assert candidate([1,2,3,4,5],1) == 15\n    assert candidate([1,2,3,4,5],5) == 5\n    assert candidate([0,0,0,0],3) == 0\n    assert candidate([7,1,7,1,7],2) == 14\n    assert candidate([6,2,2,6,2],3) == 8\n",
+    "entry_point": "circular_minimax_partition"
+  },
+  {
+    "id": "two_sum_indices",
+    "prompt": "def two_sum_indices(nums: list, target: int) -> list:\n    \"\"\"\n    Return the two original indices whose values sum to target.\n    Assume exactly one solution exists. Return indices in increasing order.\n    Do not mutate nums.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,7,11,15],9) == [0,1]\n    assert candidate([3,2,4],6) == [1,2]\n    assert candidate([3,3],6) == [0,1]\n    assert candidate([-3,4,9,-1],8) == [2,3]\n    assert candidate([0,4,3,0],0) == [0,3]\n",
+    "entry_point": "two_sum_indices"
+  },
+  {
+    "id": "merge_sorted_arrays",
+    "prompt": "def merge_sorted_arrays(a: list, b: list) -> list:\n    \"\"\"\n    Return a new sorted list containing all elements of sorted lists a and b.\n    Preserve duplicates and do not mutate either input.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([],[]) == []\n    assert candidate([1,3,5],[2,4,6]) == [1,2,3,4,5,6]\n    assert candidate([1,1,2],[1,2,2]) == [1,1,1,2,2,2]\n    assert candidate([-3,-1],[0,2]) == [-3,-1,0,2]\n    assert candidate([1],[1,1,1]) == [1,1,1,1]\n",
+    "entry_point": "merge_sorted_arrays"
+  },
+  {
+    "id": "longest_unique_substring",
+    "prompt": "def longest_unique_substring(s: str) -> int:\n    \"\"\"\n    Return the length of the longest substring containing no repeated\n    characters. The substring must be contiguous.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"\") == 0\n    assert candidate(\"abcabcbb\") == 3\n    assert candidate(\"bbbbb\") == 1\n    assert candidate(\"pwwkew\") == 3\n    assert candidate(\"abba\") == 2\n    assert candidate(\"dvdf\") == 3\n",
+    "entry_point": "longest_unique_substring"
+  },
+  {
+    "id": "valid_parentheses",
+    "prompt": "def valid_parentheses(s: str) -> bool:\n    \"\"\"\n    Return True exactly when s contains properly nested and matched\n    parentheses using (), [], and {}. Every character in s is one of\n    these six bracket characters.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"\") is True\n    assert candidate(\"()[]{}\") is True\n    assert candidate(\"([{}])\") is True\n    assert candidate(\"(]\") is False\n    assert candidate(\"([)]\") is False\n    assert candidate(\"(((\") is False\n    assert candidate(\"]\") is False\n",
+    "entry_point": "valid_parentheses"
+  },
+  {
+    "id": "rotate_array",
+    "prompt": "def rotate_array(nums: list, k: int) -> list:\n    \"\"\"\n    Return a new list containing nums rotated to the right by k positions.\n    k may be larger than len(nums). Do not mutate nums.\n    Return [] for an empty input.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3,4,5,6,7],3) == [5,6,7,1,2,3,4]\n    assert candidate([-1,-100,3,99],2) == [3,99,-1,-100]\n    assert candidate([1,2],0) == [1,2]\n    assert candidate([1,2],5) == [2,1]\n    assert candidate([],10) == []\n",
+    "entry_point": "rotate_array"
+  },
+  {
+    "id": "move_zeroes",
+    "prompt": "def move_zeroes(nums: list) -> list:\n    \"\"\"\n    Return a new list with all zero values moved to the end while preserving\n    the relative order of all nonzero values. Do not mutate nums.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([0,1,0,3,12]) == [1,3,12,0,0]\n    assert candidate([0,0,1]) == [1,0,0]\n    assert candidate([1,2,3]) == [1,2,3]\n    assert candidate([0,0,0]) == [0,0,0]\n    assert candidate([-1,0,2,0,-3]) == [-1,2,-3,0,0]\n",
+    "entry_point": "move_zeroes"
+  },
+  {
+    "id": "product_except_self",
+    "prompt": "def product_except_self(nums: list) -> list:\n    \"\"\"\n    Return a list where result[i] equals the product of every nums[j] for\n    j != i. Do not use division. Return the result for any integer list.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3,4]) == [24,12,8,6]\n    assert candidate([-1,1,0,-3,3]) == [0,0,9,0,0]\n    assert candidate([0,0]) == [0,0]\n    assert candidate([5]) == [1]\n    assert candidate([-2,-3]) == [-3,-2]\n",
+    "entry_point": "product_except_self"
+  },
+  {
+    "id": "max_subarray_sum",
+    "prompt": "def max_subarray_sum(nums: list) -> int:\n    \"\"\"\n    Return the maximum sum of a nonempty contiguous subarray.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([-2,1,-3,4,-1,2,1,-5,4]) == 6\n    assert candidate([1]) == 1\n    assert candidate([5,4,-1,7,8]) == 23\n    assert candidate([-5,-2,-8]) == -2\n    assert candidate([0,0,0]) == 0\n",
+    "entry_point": "max_subarray_sum"
+  },
+  {
+    "id": "best_time_stock",
+    "prompt": "def best_time_stock(prices: list) -> int:\n    \"\"\"\n    Return the maximum profit from one buy followed by one sell. The buy\n    must occur before the sell. Return 0 when no positive profit exists.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([7,1,5,3,6,4]) == 5\n    assert candidate([7,6,4,3,1]) == 0\n    assert candidate([1,2]) == 1\n    assert candidate([2,4,1,7]) == 6\n    assert candidate([]) == 0\n",
+    "entry_point": "best_time_stock"
+  },
+  {
+    "id": "interval_intersection",
+    "prompt": "def interval_intersection(a: list, b: list) -> list:\n    \"\"\"\n    a and b contain sorted, disjoint closed intervals [start,end].\n    Return their intersections, also as sorted closed intervals.\n    Touching endpoints count as an intersection.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[0,2],[5,10]], [[1,5],[8,12]]) == [[1,2],[5,5],[8,10]]\n    assert candidate([], [[1,2]]) == []\n    assert candidate([[1,3]], [[3,5]]) == [[3,3]]\n    assert candidate([[0,1],[2,4]], [[5,6]]) == []\n    assert candidate([[-5,-2],[0,2]], [[-4,1]]) == [[-4,-2],[0,1]]\n",
+    "entry_point": "interval_intersection"
+  },
+  {
+    "id": "meeting_rooms_needed",
+    "prompt": "def meeting_rooms_needed(intervals: list) -> int:\n    \"\"\"\n    intervals contains [start,end] meetings. A meeting ending at time t can\n    coexist with another starting at t. Return the minimum number of rooms.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[0,30],[5,10],[15,20]]) == 2\n    assert candidate([[7,10],[2,4]]) == 1\n    assert candidate([[1,5],[5,8]]) == 1\n    assert candidate([]) == 0\n    assert candidate([[0,0],[0,0],[0,1]]) == 1\n",
+    "entry_point": "meeting_rooms_needed"
+  },
+  {
+    "id": "merge_intervals",
+    "prompt": "def merge_intervals(intervals: list) -> list:\n    \"\"\"\n    Merge overlapping closed intervals. Touching intervals such as [1,2]\n    and [2,3] also merge. Return intervals sorted by start.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,3],[2,6],[8,10],[15,18]]) == [[1,6],[8,10],[15,18]]\n    assert candidate([]) == []\n    assert candidate([[1,4],[4,5]]) == [[1,5]]\n    assert candidate([[5,7],[1,3],[2,4]]) == [[1,4],[5,7]]\n    assert candidate([[1,1]]) == [[1,1]]\n",
+    "entry_point": "merge_intervals"
+  },
+  {
+    "id": "top_k_frequent",
+    "prompt": "def top_k_frequent(nums: list, k: int) -> list:\n    \"\"\"\n    Return the k most frequent distinct values. If frequencies tie, return\n    the smaller value first. Assume k is valid.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,1,1,2,2,3],2) == [1,2]\n    assert candidate([1],1) == [1]\n    assert candidate([4,4,-1,-1,2,2],2) == [-1,2]\n    assert candidate([1,2,3,4],3) == [1,2,3]\n    assert candidate([0,0,0,-1,-1,2],2) == [0,-1]\n",
+    "entry_point": "top_k_frequent"
+  },
+  {
+    "id": "group_anagrams",
+    "prompt": "def group_anagrams(words: list) -> list:\n    \"\"\"\n    Group words that are anagrams. Within each group preserve original\n    input order. Order groups by the index of their first member.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]) == [[\"eat\",\"tea\",\"ate\"],[\"tan\",\"nat\"],[\"bat\"]]\n    assert candidate([]) == []\n    assert candidate([\"\"]) == [[\"\"]]\n    assert candidate([\"a\",\"a\"]) == [[\"a\",\"a\"]]\n    assert candidate([\"ab\",\"ba\",\"abc\",\"cab\"]) == [[\"ab\",\"ba\"],[\"abc\",\"cab\"]]\n",
+    "entry_point": "group_anagrams"
+  },
+  {
+    "id": "daily_temperatures",
+    "prompt": "def daily_temperatures(temperatures: list) -> list:\n    \"\"\"\n    For each day, return how many days one must wait until a strictly warmer\n    temperature occurs. Return 0 if none exists.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([73,74,75,71,69,72,76,73]) == [1,1,4,2,1,1,0,0]\n    assert candidate([30,40,50,60]) == [1,1,1,0]\n    assert candidate([30,60,90]) == [1,1,0]\n    assert candidate([90,80,70]) == [0,0,0]\n    assert candidate([]) == []\n",
+    "entry_point": "daily_temperatures"
+  },
+  {
+    "id": "evaluate_rpn",
+    "prompt": "def evaluate_rpn(tokens: list) -> int:\n    \"\"\"\n    Evaluate an expression in Reverse Polish Notation. Tokens are integers\n    or +, -, *, /. Division truncates toward zero. The expression is valid.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([\"2\",\"1\",\"+\",\"3\",\"*\"]) == 9\n    assert candidate([\"4\",\"13\",\"5\",\"/\",\"+\"]) == 6\n    assert candidate([\"10\",\"6\",\"9\",\"3\",\"+\",\"-11\",\"*\",\"/\",\"*\",\"17\",\"+\",\"5\",\"+\"]) == 22\n    assert candidate([\"7\",\"-3\",\"/\"]) == -2\n    assert candidate([\"-7\",\"3\",\"/\"]) == -2\n",
+    "entry_point": "evaluate_rpn"
+  },
+  {
+    "id": "min_stack_sequence",
+    "prompt": "def min_stack_sequence(operations: list) -> list:\n    \"\"\"\n    Simulate a stack. Operations are tuples ('push', value), ('pop',), and\n    ('min',). For every 'pop' append the popped value; for every 'min' append\n    the current minimum. The input is valid and min is never requested on an\n    empty stack.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([(\"push\",3),(\"push\",1),(\"min\",),(\"push\",2),(\"min\",),(\"pop\",),(\"min\",)]) == [1,1,2,1]\n    assert candidate([(\"push\",-2),(\"min\",),(\"pop\",)]) == [-2,-2]\n    assert candidate([(\"push\",5),(\"push\",5),(\"pop\",),(\"min\",)]) == [5,5]\n    assert candidate([]) == []\n",
+    "entry_point": "min_stack_sequence"
+  },
+  {
+    "id": "binary_search_first",
+    "prompt": "def binary_search_first(nums: list, target: int) -> int:\n    \"\"\"\n    nums is sorted nondecreasing. Return the first index containing target,\n    or -1 if target is absent.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,2,2,3],2) == 1\n    assert candidate([1,2,3],4) == -1\n    assert candidate([],1) == -1\n    assert candidate([5,5,5],5) == 0\n    assert candidate([-3,-1,0,0,2],0) == 2\n",
+    "entry_point": "binary_search_first"
+  },
+  {
+    "id": "search_rotated_array",
+    "prompt": "def search_rotated_array(nums: list, target: int) -> int:\n    \"\"\"\n    nums is a rotated sorted array with distinct values. Return the index of\n    target or -1 if absent.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([4,5,6,7,0,1,2],0) == 4\n    assert candidate([4,5,6,7,0,1,2],3) == -1\n    assert candidate([1],1) == 0\n    assert candidate([1,3],3) == 1\n    assert candidate([5,1,3],5) == 0\n",
+    "entry_point": "search_rotated_array"
+  },
+  {
+    "id": "find_peak",
+    "prompt": "def find_peak(nums: list) -> int:\n    \"\"\"\n    Return any index i such that nums[i] is greater than its existing\n    neighbors. Treat missing neighbors beyond the ends as negative infinity.\n    Assume nums is nonempty and a peak exists.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    def valid(nums, i):\n        if not 0 <= i < len(nums):\n            return False\n        left = nums[i-1] if i > 0 else float(\"-inf\")\n        right = nums[i+1] if i + 1 < len(nums) else float(\"-inf\")\n        return nums[i] > left and nums[i] > right\n    assert valid([1,2,3,1], candidate([1,2,3,1]))\n    assert valid([1,2,1,3,5,6,4], candidate([1,2,1,3,5,6,4]))\n    assert valid([1], candidate([1]))\n    assert valid([2,1], candidate([2,1]))\n",
+    "entry_point": "find_peak"
+  },
+  {
+    "id": "reverse_linked_list",
+    "prompt": "def reverse_linked_list(values: list) -> list:\n    \"\"\"\n    Return a new list containing the values in reverse order. This represents\n    reversing a linked list while avoiding any node-class dependency.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([]) == []\n    assert candidate([1]) == [1]\n    assert candidate([1,2,3,4]) == [4,3,2,1]\n    assert candidate([-1,0,5]) == [5,0,-1]\n",
+    "entry_point": "reverse_linked_list"
+  },
+  {
+    "id": "palindrome_linked_values",
+    "prompt": "def palindrome_linked_values(values: list) -> bool:\n    \"\"\"\n    Return True if the sequence of values reads the same forward and backward.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([]) is True\n    assert candidate([1]) is True\n    assert candidate([1,2,2,1]) is True\n    assert candidate([1,2,3]) is False\n    assert candidate([\"a\",\"b\",\"a\"]) is True\n",
+    "entry_point": "palindrome_linked_values"
+  },
+  {
+    "id": "add_binary_strings",
+    "prompt": "def add_binary_strings(a: str, b: str) -> str:\n    \"\"\"\n    Return the binary sum of nonempty binary strings a and b without using\n    integer conversion as the main operation.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"11\",\"1\") == \"100\"\n    assert candidate(\"1010\",\"1011\") == \"10101\"\n    assert candidate(\"0\",\"0\") == \"0\"\n    assert candidate(\"1111\",\"1\") == \"10000\"\n",
+    "entry_point": "add_binary_strings"
+  },
+  {
+    "id": "climb_stairs",
+    "prompt": "def climb_stairs(n: int) -> int:\n    \"\"\"\n    Starting at step 0, return the number of distinct ways to reach step n\n    when each move is either 1 or 2 steps. n >= 0.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(0) == 1\n    assert candidate(1) == 1\n    assert candidate(2) == 2\n    assert candidate(5) == 8\n    assert candidate(10) == 89\n",
+    "entry_point": "climb_stairs"
+  },
+  {
+    "id": "house_robber",
+    "prompt": "def house_robber(nums: list) -> int:\n    \"\"\"\n    Return the maximum sum of values from non-adjacent positions.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3,1]) == 4\n    assert candidate([2,7,9,3,1]) == 12\n    assert candidate([]) == 0\n    assert candidate([5]) == 5\n    assert candidate([2,1,1,2]) == 4\n",
+    "entry_point": "house_robber"
+  },
+  {
+    "id": "coin_change_min",
+    "prompt": "def coin_change_min(coins: list, amount: int) -> int:\n    \"\"\"\n    Return the minimum number of coins needed to make amount, using unlimited\n    copies of the given positive coin denominations. Return -1 if impossible.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,5],11) == 3\n    assert candidate([2],3) == -1\n    assert candidate([1],0) == 0\n    assert candidate([2,5,10,1,3],27) == 4\n    assert candidate([186,419,83,408],6249) == 20\n",
+    "entry_point": "coin_change_min"
+  },
+  {
+    "id": "unique_paths",
+    "prompt": "def unique_paths(m: int, n: int) -> int:\n    \"\"\"\n    Return the number of paths from the top-left to bottom-right of an m by n\n    grid when each move is one step right or one step down. m,n >= 1.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(1,1) == 1\n    assert candidate(2,3) == 3\n    assert candidate(3,7) == 28\n    assert candidate(3,3) == 6\n",
+    "entry_point": "unique_paths"
+  },
+  {
+    "id": "longest_increasing_subsequence",
+    "prompt": "def longest_increasing_subsequence(nums: list) -> int:\n    \"\"\"\n    Return the length of a strictly increasing subsequence. Elements need not\n    be contiguous.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([10,9,2,5,3,7,101,18]) == 4\n    assert candidate([0,1,0,3,2,3]) == 4\n    assert candidate([7,7,7,7]) == 1\n    assert candidate([]) == 0\n    assert candidate([4,10,4,3,8,9]) == 3\n",
+    "entry_point": "longest_increasing_subsequence"
+  },
+  {
+    "id": "edit_distance",
+    "prompt": "def edit_distance(a: str, b: str) -> int:\n    \"\"\"\n    Return the minimum number of single-character insertions, deletions, and\n    substitutions required to transform a into b.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"horse\",\"ros\") == 3\n    assert candidate(\"intention\",\"execution\") == 5\n    assert candidate(\"\",\"abc\") == 3\n    assert candidate(\"abc\",\"abc\") == 0\n    assert candidate(\"a\",\"b\") == 1\n",
+    "entry_point": "edit_distance"
+  },
+  {
+    "id": "word_break",
+    "prompt": "def word_break(s: str, words: list) -> bool:\n    \"\"\"\n    Return True if s can be segmented into one or more dictionary words.\n    A dictionary word may be reused.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"leetcode\",[\"leet\",\"code\"]) is True\n    assert candidate(\"applepenapple\",[\"apple\",\"pen\"]) is True\n    assert candidate(\"catsandog\",[\"cats\",\"dog\",\"sand\",\"and\",\"cat\"]) is False\n    assert candidate(\"\",[\"a\"]) is True\n    assert candidate(\"aaaaaaa\",[\"aaaa\",\"aaa\"]) is True\n",
+    "entry_point": "word_break"
+  },
+  {
+    "id": "decode_ways",
+    "prompt": "def decode_ways(s: str) -> int:\n    \"\"\"\n    Digits encode letters where 1=A through 26=Z. Return the number of\n    possible decodings. A leading zero or invalid zero placement is invalid.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"12\") == 2\n    assert candidate(\"226\") == 3\n    assert candidate(\"06\") == 0\n    assert candidate(\"11106\") == 2\n    assert candidate(\"0\") == 0\n    assert candidate(\"10\") == 1\n",
+    "entry_point": "decode_ways"
+  },
+  {
+    "id": "subset_sum_exists",
+    "prompt": "def subset_sum_exists(nums: list, target: int) -> bool:\n    \"\"\"\n    Return True if some subset of nums sums exactly to target. Each input\n    element may be used at most once. nums contains non-negative integers.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([3,34,4,12,5,2],9) is True\n    assert candidate([3,34,4,12,5,2],30) is False\n    assert candidate([],0) is True\n    assert candidate([0,0],0) is True\n    assert candidate([2,4,6],5) is False\n",
+    "entry_point": "subset_sum_exists"
+  },
+  {
+    "id": "count_islands",
+    "prompt": "def count_islands(grid: list) -> int:\n    \"\"\"\n    grid contains '1' land and '0' water. Count connected land components\n    using four-directional adjacency. Do not mutate the input.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[\"1\",\"1\",\"0\"],[\"0\",\"1\",\"0\"],[\"0\",\"0\",\"1\"]]) == 2\n    assert candidate([[\"1\"]]) == 1\n    assert candidate([[\"0\"]]) == 0\n    assert candidate([]) == 0\n    assert candidate([[\"1\",\"0\",\"1\"],[\"0\",\"1\",\"0\"]]) == 3\n",
+    "entry_point": "count_islands"
+  },
+  {
+    "id": "flood_fill",
+    "prompt": "def flood_fill(image: list, sr: int, sc: int, color: int) -> list:\n    \"\"\"\n    Replace the connected component of image[sr][sc] with color using\n    four-directional adjacency. Return a new image and do not mutate input.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,1,1],[1,1,0],[1,0,1]],1,1,2) == [[2,2,2],[2,2,0],[2,0,1]]\n    assert candidate([[0,0,0],[0,0,0]],0,0,0) == [[0,0,0],[0,0,0]]\n    assert candidate([[1]],0,0,2) == [[2]]\n    assert candidate([[1,0],[0,1]],0,0,2) == [[2,0],[0,1]]\n",
+    "entry_point": "flood_fill"
+  },
+  {
+    "id": "shortest_grid_path",
+    "prompt": "def shortest_grid_path(grid: list) -> int:\n    \"\"\"\n    grid contains 0 for open cells and 1 for blocked cells. Return the\n    minimum number of moves from top-left to bottom-right using four-directional\n    moves, or -1 if unreachable. Start and end must be open.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[0,0,0],[1,1,0],[0,0,0]]) == 4\n    assert candidate([[0,1],[1,0]]) == -1\n    assert candidate([[0]]) == 0\n    assert candidate([[1]]) == -1\n    assert candidate([[0,0],[0,0]]) == 2\n",
+    "entry_point": "shortest_grid_path"
+  },
+  {
+    "id": "course_schedule_possible",
+    "prompt": "def course_schedule_possible(n: int, prerequisites: list) -> bool:\n    \"\"\"\n    prerequisites contains [course, prerequisite] pairs. Return True if all\n    n courses can be completed without a cycle.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(2,[[1,0]]) is True\n    assert candidate(2,[[1,0],[0,1]]) is False\n    assert candidate(4,[[1,0],[2,1],[3,2]]) is True\n    assert candidate(1,[]) is True\n    assert candidate(3,[[0,1],[1,2],[2,0]]) is False\n",
+    "entry_point": "course_schedule_possible"
+  },
+  {
+    "id": "network_delay_time",
+    "prompt": "def network_delay_time(times: list, n: int, k: int) -> int:\n    \"\"\"\n    times contains directed edges [u,v,w] with positive weights. Starting\n    from k, return the time needed for all n nodes to receive the signal, or\n    -1 if some node is unreachable.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[2,1,1],[2,3,1],[3,4,1]],4,2) == 2\n    assert candidate([[1,2,1]],2,2) == -1\n    assert candidate([[1,2,1]],2,1) == 1\n    assert candidate([[1,2,1],[2,3,2],[1,3,10]],3,1) == 3\n",
+    "entry_point": "network_delay_time"
+  },
+  {
+    "id": "minimum_spanning_tree_weight",
+    "prompt": "def minimum_spanning_tree_weight(n: int, edges: list) -> int:\n    \"\"\"\n    edges contains undirected [u,v,w] edges with vertices 0..n-1. Return the\n    minimum total weight of a spanning tree. The graph is guaranteed connected.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(4,[[0,1,1],[0,2,2],[1,2,2],[1,3,1],[2,3,3]]) == 4\n    assert candidate(2,[[0,1,7]]) == 7\n    assert candidate(3,[[0,1,1],[1,2,1],[0,2,5]]) == 2\n    assert candidate(4,[[0,1,1],[1,2,2],[2,3,3],[0,3,4]]) == 6\n",
+    "entry_point": "minimum_spanning_tree_weight"
+  },
+  {
+    "id": "dijkstra_shortest_paths",
+    "prompt": "def dijkstra_shortest_paths(n: int, edges: list, source: int) -> list:\n    \"\"\"\n    edges contains directed [u,v,w] edges with nonnegative weights.\n    Return distances from source to every vertex, using -1 for unreachable\n    vertices.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(5,[[0,1,2],[0,2,4],[1,2,1],[1,3,7],[2,4,3],[3,4,1]],0) == [0,2,3,9,6]\n    assert candidate(3,[[0,1,1]],0) == [0,1,-1]\n    assert candidate(1,[],0) == [0]\n    assert candidate(4,[[0,1,0],[1,2,2],[0,3,5]],0) == [0,0,2,5]\n",
+    "entry_point": "dijkstra_shortest_paths"
+  },
+  {
+    "id": "connected_components",
+    "prompt": "def connected_components(n: int, edges: list) -> int:\n    \"\"\"\n    edges contains undirected edges between vertices 0..n-1. Return the number\n    of connected components.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(5,[[0,1],[1,2],[3,4]]) == 2\n    assert candidate(1,[]) == 1\n    assert candidate(4,[]) == 4\n    assert candidate(4,[[0,1],[1,2],[2,3]]) == 1\n",
+    "entry_point": "connected_components"
+  },
+  {
+    "id": "bipartite_graph",
+    "prompt": "def bipartite_graph(graph: list) -> bool:\n    \"\"\"\n    graph[i] lists neighbors of vertex i in an undirected graph. Return True\n    if the graph is bipartite.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,3],[0,2],[1,3],[0,2]]) is True\n    assert candidate([[1,2],[0,2],[0,1]]) is False\n    assert candidate([]) is True\n    assert candidate([[]]) is True\n    assert candidate([[1],[0]]) is True\n",
+    "entry_point": "bipartite_graph"
+  },
+  {
+    "id": "kth_largest",
+    "prompt": "def kth_largest(nums: list, k: int) -> int:\n    \"\"\"\n    Return the kth largest element, counting duplicate values separately.\n    Assume 1 <= k <= len(nums).\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([3,2,1,5,6,4],2) == 5\n    assert candidate([3,2,3,1,2,4,5,5,6],4) == 4\n    assert candidate([1],1) == 1\n    assert candidate([-1,-2,-3],1) == -1\n",
+    "entry_point": "kth_largest"
+  },
+  {
+    "id": "sort_colors",
+    "prompt": "def sort_colors(nums: list) -> list:\n    \"\"\"\n    Return a new list sorted in nondecreasing order. Every value is 0, 1, or\n    2. Do not mutate nums.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,0,2,1,1,0]) == [0,0,1,1,2,2]\n    assert candidate([2,0,1]) == [0,1,2]\n    assert candidate([0]) == [0]\n    assert candidate([1,1,1]) == [1,1,1]\n",
+    "entry_point": "sort_colors"
+  },
+  {
+    "id": "three_sum_zero",
+    "prompt": "def three_sum_zero(nums: list) -> list:\n    \"\"\"\n    Return all unique triples of values [a,b,c] from distinct indices such that\n    a+b+c=0. Each triple must be sorted, and the list of triples must be\n    lexicographically sorted.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([-1,0,1,2,-1,-4]) == [[-1,-1,2],[-1,0,1]]\n    assert candidate([]) == []\n    assert candidate([0,0,0,0]) == [[0,0,0]]\n    assert candidate([1,2,-3]) == [[-3,1,2]]\n    assert candidate([-2,0,1,1,2]) == [[-2,0,2],[-2,1,1]]\n    assert candidate([1,2,3]) == []\n",
+    "entry_point": "three_sum_zero"
+  },
+  {
+    "id": "spiral_matrix",
+    "prompt": "def spiral_matrix(matrix: list) -> list:\n    \"\"\"\n    Return matrix elements in clockwise spiral order. Return [] for an empty\n    matrix. The matrix is rectangular.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,2,3],[4,5,6],[7,8,9]]) == [1,2,3,6,9,8,7,4,5]\n    assert candidate([[1,2,3,4]]) == [1,2,3,4]\n    assert candidate([[1],[2],[3]]) == [1,2,3]\n    assert candidate([]) == []\n    assert candidate([[1,2],[3,4]]) == [1,2,4,3]\n",
+    "entry_point": "spiral_matrix"
+  },
+  {
+    "id": "set_matrix_zeroes",
+    "prompt": "def set_matrix_zeroes(matrix: list) -> list:\n    \"\"\"\n    If matrix[i][j] is zero, set every element in row i and column j to zero.\n    Return a new matrix and do not mutate input.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,1,1],[1,0,1],[1,1,1]]) == [[1,0,1],[0,0,0],[1,0,1]]\n    assert candidate([[0,1],[1,1]]) == [[0,0],[0,1]]\n    assert candidate([[1,2,3],[4,5,6]]) == [[1,2,3],[4,5,6]]\n    assert candidate([]) == []\n",
+    "entry_point": "set_matrix_zeroes"
+  },
+  {
+    "id": "rotate_matrix",
+    "prompt": "def rotate_matrix(matrix: list) -> list:\n    \"\"\"\n    Return a new n x n matrix rotated 90 degrees clockwise. Do not mutate\n    input.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,2,3],[4,5,6],[7,8,9]]) == [[7,4,1],[8,5,2],[9,6,3]]\n    assert candidate([[1,2],[3,4]]) == [[3,1],[4,2]]\n    assert candidate([[1]]) == [[1]]\n",
+    "entry_point": "rotate_matrix"
+  },
+  {
+    "id": "largest_rectangle_histogram",
+    "prompt": "def largest_rectangle_histogram(heights: list) -> int:\n    \"\"\"\n    Return the largest possible rectangle area under the histogram.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,1,5,6,2,3]) == 10\n    assert candidate([2,4]) == 4\n    assert candidate([2,2,2]) == 6\n    assert candidate([]) == 0\n    assert candidate([0,1,0]) == 1\n",
+    "entry_point": "largest_rectangle_histogram"
+  },
+  {
+    "id": "trapping_rain_water",
+    "prompt": "def trapping_rain_water(height: list) -> int:\n    \"\"\"\n    Return the total units of water trapped between nonnegative bar heights.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([0,1,0,2,1,0,1,3,2,1,2,1]) == 6\n    assert candidate([4,2,0,3,2,5]) == 9\n    assert candidate([]) == 0\n    assert candidate([1,2,3]) == 0\n    assert candidate([3,3,3]) == 0\n",
+    "entry_point": "trapping_rain_water"
+  },
+  {
+    "id": "largest_submatrix_ones",
+    "prompt": "def largest_submatrix_ones(matrix: list) -> int:\n    \"\"\"\n    Return the area of the largest all-1 rectangular submatrix.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]) == 6\n    assert candidate([[0,0],[0,0]]) == 0\n    assert candidate([[1,1],[1,1]]) == 4\n    assert candidate([[1]]) == 1\n",
+    "entry_point": "largest_submatrix_ones"
+  },
+  {
+    "id": "binary_tree_level_order",
+    "prompt": "def binary_tree_level_order(values: list) -> list:\n    \"\"\"\n    values is a level-order representation of a binary tree using None for\n    missing children. Return the node values grouped by depth.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([3,9,20,None,None,15,7]) == [[3],[9,20],[15,7]]\n    assert candidate([1]) == [[1]]\n    assert candidate([]) == []\n    assert candidate([1,None,2]) == [[1],[2]]\n",
+    "entry_point": "binary_tree_level_order"
+  },
+  {
+    "id": "binary_tree_max_depth",
+    "prompt": "def binary_tree_max_depth(values: list) -> int:\n    \"\"\"\n    values is a level-order representation of a binary tree using None for\n    missing children. Return the maximum depth, with an empty tree having\n    depth 0.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([3,9,20,None,None,15,7]) == 3\n    assert candidate([1]) == 1\n    assert candidate([]) == 0\n    assert candidate([1,None,2,None,3]) == 3\n",
+    "entry_point": "binary_tree_max_depth"
+  },
+  {
+    "id": "binary_tree_inorder",
+    "prompt": "def binary_tree_inorder(values: list) -> list:\n    \"\"\"\n    values is a level-order representation of a binary tree using None for\n    missing children. Return inorder traversal.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,None,2,3]) == [1,3,2]\n    assert candidate([3,9,20,None,None,15,7]) == [9,3,15,20,7]\n    assert candidate([]) == []\n    assert candidate([1]) == [1]\n",
+    "entry_point": "binary_tree_inorder"
+  },
+  {
+    "id": "validate_bst",
+    "prompt": "def validate_bst(values: list) -> bool:\n    \"\"\"\n    values is a level-order binary tree using None for missing children.\n    Return True iff the tree is a valid binary search tree with strictly\n    increasing inorder traversal.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,1,3]) is True\n    assert candidate([5,1,4,None,None,3,6]) is False\n    assert candidate([]) is True\n    assert candidate([2,2]) is False\n    assert candidate([1,None,2,3]) is False\n",
+    "entry_point": "validate_bst"
+  },
+  {
+    "id": "lowest_common_ancestor_bst",
+    "prompt": "def lowest_common_ancestor_bst(values: list, p: int, q: int) -> int:\n    \"\"\"\n    values is a valid BST in level-order representation. p and q are values\n    present in the tree. Return the value of their lowest common ancestor.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([6,2,8,0,4,7,9,None,None,3,5],2,8) == 6\n    assert candidate([6,2,8,0,4,7,9,None,None,3,5],2,4) == 2\n    assert candidate([2,1,3],1,3) == 2\n",
+    "entry_point": "lowest_common_ancestor_bst"
+  },
+  {
+    "id": "serialize_tree",
+    "prompt": "def serialize_tree(values: list) -> str:\n    \"\"\"\n    Serialize a binary tree represented in level order using None. Return a\n    comma-separated preorder representation using '#' for missing children.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3,None,None,4,5]) == \"1,2,#,#,3,4,#,#,5,#,#\"\n    assert candidate([]) == \"#\"\n    assert candidate([1]) == \"1,#,#\"\n",
+    "entry_point": "serialize_tree"
+  },
+  {
+    "id": "generate_parentheses",
+    "prompt": "def generate_parentheses(n: int) -> list:\n    \"\"\"\n    Return all strings containing n pairs of balanced parentheses. Return\n    them in lexicographic order.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(0) == [\"\"]\n    assert candidate(1) == [\"()\"]\n    assert candidate(2) == [\"(())\",\"()()\"]\n    assert candidate(3) == [\"((()))\",\"(()())\",\"(())()\",\"()(())\",\"()()()\"]\n",
+    "entry_point": "generate_parentheses"
+  },
+  {
+    "id": "permutations_unique",
+    "prompt": "def permutations_unique(nums: list) -> list:\n    \"\"\"\n    Return all distinct permutations of nums, each permutation as a list.\n    Sort the output lexicographically.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3]) == [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]\n    assert candidate([1,1,2]) == [[1,1,2],[1,2,1],[2,1,1]]\n    assert candidate([]) == [[]]\n    assert candidate([2,1]) == [[1,2],[2,1]]\n",
+    "entry_point": "permutations_unique"
+  },
+  {
+    "id": "combination_sum",
+    "prompt": "def combination_sum(candidates: list, target: int) -> list:\n    \"\"\"\n    candidates contains distinct positive integers. Return all unique\n    combinations summing to target; each candidate may be reused. Sort each\n    combination and sort the outer list lexicographically.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,3,6,7],7) == [[2,2,3],[7]]\n    assert candidate([2,3,5],8) == [[2,2,2,2],[2,3,3],[3,5]]\n    assert candidate([2],1) == []\n    assert candidate([1],3) == [[1,1,1]]\n",
+    "entry_point": "combination_sum"
+  },
+  {
+    "id": "word_ladder_length",
+    "prompt": "def word_ladder_length(begin: str, end: str, words: list) -> int:\n    \"\"\"\n    Return the number of words in the shortest transformation sequence from\n    begin to end, changing exactly one character at a time. Every intermediate\n    word must be in words. Return 0 if impossible. If begin == end, return 1.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"hit\",\"cog\",[\"hot\",\"dot\",\"dog\",\"lot\",\"log\",\"cog\"]) == 5\n    assert candidate(\"hit\",\"cog\",[\"hot\",\"dot\",\"dog\",\"lot\",\"log\"]) == 0\n    assert candidate(\"same\",\"same\",[]) == 1\n    assert candidate(\"a\",\"c\",[\"b\"]) == 0\n",
+    "entry_point": "word_ladder_length"
+  },
+  {
+    "id": "partition_equal_subset",
+    "prompt": "def partition_equal_subset(nums: list) -> bool:\n    \"\"\"\n    Return True if nums can be partitioned into two subsets with equal sum.\n    Each element is used at most once.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,5,11,5]) is True\n    assert candidate([1,2,3,5]) is False\n    assert candidate([]) is True\n    assert candidate([2,2]) is True\n    assert candidate([1]) is False\n",
+    "entry_point": "partition_equal_subset"
+  },
+  {
+    "id": "minimum_path_sum",
+    "prompt": "def minimum_path_sum(grid: list) -> int:\n    \"\"\"\n    Return the minimum sum from top-left to bottom-right moving only right or\n    down. Grid values are nonnegative.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[1,3,1],[1,5,1],[4,2,1]]) == 7\n    assert candidate([[1,2,3],[4,5,6]]) == 12\n    assert candidate([[5]]) == 5\n",
+    "entry_point": "minimum_path_sum"
+  },
+  {
+    "id": "maximum_product_subarray",
+    "prompt": "def maximum_product_subarray(nums: list) -> int:\n    \"\"\"\n    Return the largest product of a nonempty contiguous subarray.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,3,-2,4]) == 6\n    assert candidate([-2,0,-1]) == 0\n    assert candidate([-2,3,-4]) == 24\n    assert candidate([-1,-2,-3,0]) == 6\n",
+    "entry_point": "maximum_product_subarray"
+  },
+  {
+    "id": "gas_station_start",
+    "prompt": "def gas_station_start(gas: list, cost: list) -> int:\n    \"\"\"\n    Return the unique starting station index from which a car can complete\n    the circular route, or -1 if impossible. Assume at most one solution.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3,4,5],[3,4,5,1,2]) == 3\n    assert candidate([2,3,4],[3,4,3]) == -1\n    assert candidate([5],[5]) == 0\n    assert candidate([3,1,1],[1,2,2]) == 0\n",
+    "entry_point": "gas_station_start"
+  },
+  {
+    "id": "jump_game",
+    "prompt": "def jump_game(nums: list) -> bool:\n    \"\"\"\n    nums[i] is the maximum jump length from i. Return True if the last index\n    is reachable from index 0.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,3,1,1,4]) is True\n    assert candidate([3,2,1,0,4]) is False\n    assert candidate([0]) is True\n    assert candidate([2,0,0]) is True\n",
+    "entry_point": "jump_game"
+  },
+  {
+    "id": "jump_game_min_jumps",
+    "prompt": "def jump_game_min_jumps(nums: list) -> int:\n    \"\"\"\n    Return the minimum number of jumps needed to reach the last index, or -1\n    if unreachable.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,3,1,1,4]) == 2\n    assert candidate([2,3,0,1,4]) == 2\n    assert candidate([0]) == 0\n    assert candidate([3,2,1,0,4]) == -1\n",
+    "entry_point": "jump_game_min_jumps"
+  },
+  {
+    "id": "partition_labels",
+    "prompt": "def partition_labels(s: str) -> list:\n    \"\"\"\n    Partition s into as many parts as possible so that each character appears\n    in at most one part. Return the part lengths.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"ababcbacadefegdehijhklij\") == [9,7,8]\n    assert candidate(\"eccbbbbdec\") == [10]\n    assert candidate(\"\") == []\n    assert candidate(\"abc\") == [1,1,1]\n",
+    "entry_point": "partition_labels"
+  },
+  {
+    "id": "character_frequency_sort",
+    "prompt": "def character_frequency_sort(s: str) -> str:\n    \"\"\"\n    Return characters sorted by decreasing frequency. If two characters have\n    equal frequency, order them by ascending character. Repeat each character\n    by its frequency.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"tree\") == \"eert\"\n    assert candidate(\"cccaaa\") == \"aaaccc\"\n    assert candidate(\"Aabb\") == \"bbAa\"\n    assert candidate(\"\") == \"\"\n    assert candidate(\"abc\") == \"abc\"\n",
+    "entry_point": "character_frequency_sort"
+  },
+  {
+    "id": "minimum_window_substring",
+    "prompt": "def minimum_window_substring(s: str, t: str) -> str:\n    \"\"\"\n    Return the shortest substring of s containing every character of t with\n    multiplicity. If several windows have the same minimum length, return the\n    leftmost. Return \"\" if impossible.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"ADOBECODEBANC\",\"ABC\") == \"BANC\"\n    assert candidate(\"a\",\"a\") == \"a\"\n    assert candidate(\"a\",\"aa\") == \"\"\n    assert candidate(\"ab\",\"b\") == \"b\"\n    assert candidate(\"abc\",\"ac\") == \"abc\"\n",
+    "entry_point": "minimum_window_substring"
+  },
+  {
+    "id": "longest_palindromic_substring",
+    "prompt": "def longest_palindromic_substring(s: str) -> str:\n    \"\"\"\n    Return the longest palindromic substring. If multiple longest substrings\n    exist, return the leftmost one.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"babad\") == \"bab\"\n    assert candidate(\"cbbd\") == \"bb\"\n    assert candidate(\"a\") == \"a\"\n    assert candidate(\"\") == \"\"\n    assert candidate(\"ac\") == \"a\"\n",
+    "entry_point": "longest_palindromic_substring"
+  },
+  {
+    "id": "count_palindromic_substrings",
+    "prompt": "def count_palindromic_substrings(s: str) -> int:\n    \"\"\"\n    Return the number of contiguous substrings that are palindromes. Count\n    equal-value substrings at different positions separately.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"abc\") == 3\n    assert candidate(\"aaa\") == 6\n    assert candidate(\"aba\") == 4\n    assert candidate(\"\") == 0\n    assert candidate(\"abba\") == 6\n",
+    "entry_point": "count_palindromic_substrings"
+  },
+  {
+    "id": "string_compression",
+    "prompt": "def string_compression(s: str) -> str:\n    \"\"\"\n    Replace each maximal run of the same character by character followed by\n    its count. For a run of length 1, still include count 1.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"aabcccccaaa\") == \"a2b1c5a3\"\n    assert candidate(\"a\") == \"a1\"\n    assert candidate(\"\") == \"\"\n    assert candidate(\"aa\") == \"a2\"\n    assert candidate(\"abc\") == \"a1b1c1\"\n",
+    "entry_point": "string_compression"
+  },
+  {
+    "id": "compare_version_numbers",
+    "prompt": "def compare_version_numbers(v1: str, v2: str) -> int:\n    \"\"\"\n    Compare dot-separated nonnegative integer version components, ignoring\n    leading zeros. Return -1, 0, or 1 according as v1 is smaller, equal, or\n    larger.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"1.01\",\"1.001\") == 0\n    assert candidate(\"1.0\",\"1.0.0\") == 0\n    assert candidate(\"0.1\",\"1.1\") == -1\n    assert candidate(\"1.0.1\",\"1\") == 1\n    assert candidate(\"7.5.2.4\",\"7.5.3\") == -1\n",
+    "entry_point": "compare_version_numbers"
+  },
+  {
+    "id": "simplify_path",
+    "prompt": "def simplify_path(path: str) -> str:\n    \"\"\"\n    Simplify an absolute Unix path. Multiple slashes are equivalent; '.' is\n    ignored; '..' moves to the parent unless already at root. Return a path\n    beginning with '/'.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"/home/\") == \"/home\"\n    assert candidate(\"/../\") == \"/\"\n    assert candidate(\"/home//foo/\") == \"/home/foo\"\n    assert candidate(\"/a/./b/../../c/\") == \"/c\"\n    assert candidate(\"/a/../../b/\") == \"/b\"\n",
+    "entry_point": "simplify_path"
+  },
+  {
+    "id": "valid_number",
+    "prompt": "def valid_number(s: str) -> bool:\n    \"\"\"\n    Return True iff s is a valid decimal number with optional sign and optional\n    exponent e/E with optional sign. No spaces are present.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"2\") is True\n    assert candidate(\"0089\") is True\n    assert candidate(\"-0.1\") is True\n    assert candidate(\"+3.14\") is True\n    assert candidate(\"2e10\") is True\n    assert candidate(\"-90E3\") is True\n    assert candidate(\"abc\") is False\n    assert candidate(\"1e\") is False\n    assert candidate(\".\") is False\n    assert candidate(\"6e-\") is False\n",
+    "entry_point": "valid_number"
+  },
+  {
+    "id": "atoi_parse_integer",
+    "prompt": "def atoi_parse_integer(s: str) -> int:\n    \"\"\"\n    Parse a signed decimal integer from s: ignore leading spaces, read an\n    optional sign, then consecutive digits. Stop at the first nondigit.\n    Clamp to the 32-bit signed range.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"42\") == 42\n    assert candidate(\"   -42\") == -42\n    assert candidate(\"4193 with words\") == 4193\n    assert candidate(\"words and 987\") == 0\n    assert candidate(\"-91283472332\") == -2147483648\n    assert candidate(\"91283472332\") == 2147483647\n",
+    "entry_point": "atoi_parse_integer"
+  },
+  {
+    "id": "reverse_words",
+    "prompt": "def reverse_words(s: str) -> str:\n    \"\"\"\n    Return words in reverse order, collapsing all whitespace between words to\n    single spaces. Return \"\" if there are no words.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"the sky is blue\") == \"blue is sky the\"\n    assert candidate(\"  hello world  \") == \"world hello\"\n    assert candidate(\"a good   example\") == \"example good a\"\n    assert candidate(\"\") == \"\"\n",
+    "entry_point": "reverse_words"
+  },
+  {
+    "id": "isomorphic_strings",
+    "prompt": "def isomorphic_strings(s: str, t: str) -> bool:\n    \"\"\"\n    Return True if characters in s can be mapped one-to-one onto characters in\n    t while preserving positions.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"egg\",\"add\") is True\n    assert candidate(\"foo\",\"bar\") is False\n    assert candidate(\"paper\",\"title\") is True\n    assert candidate(\"ab\",\"aa\") is False\n    assert candidate(\"\",\"\") is True\n",
+    "entry_point": "isomorphic_strings"
+  },
+  {
+    "id": "word_pattern",
+    "prompt": "def word_pattern(pattern: str, s: str) -> bool:\n    \"\"\"\n    Return True iff each pattern character maps bijectively to exactly one\n    whitespace-separated word and the mapping is consistent.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"abba\",\"dog cat cat dog\") is True\n    assert candidate(\"abba\",\"dog cat cat fish\") is False\n    assert candidate(\"aaaa\",\"dog cat cat dog\") is False\n    assert candidate(\"abba\",\"dog dog dog dog\") is False\n    assert candidate(\"\",\"\") is True\n",
+    "entry_point": "word_pattern"
+  },
+  {
+    "id": "anagram_min_deletions",
+    "prompt": "def anagram_min_deletions(a: str, b: str) -> int:\n    \"\"\"\n    Return the minimum number of character deletions from a and b combined\n    required to make the two strings anagrams.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"sea\",\"eat\") == 2\n    assert candidate(\"leetcode\",\"practice\") == 10\n    assert candidate(\"\",\"abc\") == 3\n    assert candidate(\"abc\",\"abc\") == 0\n",
+    "entry_point": "anagram_min_deletions"
+  },
+  {
+    "id": "task_scheduler",
+    "prompt": "def task_scheduler(tasks: list, cooldown: int) -> int:\n    \"\"\"\n    Each task is represented by a hashable value. Execute all tasks in any\n    order. Equal tasks must have at least `cooldown` other time slots between\n    executions. Return the minimum number of time slots, including idle slots.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([\"A\",\"A\",\"A\",\"B\",\"B\",\"B\"],2) == 8\n    assert candidate([\"A\",\"A\",\"A\",\"B\",\"B\",\"B\"],0) == 6\n    assert candidate([\"A\"],2) == 1\n    assert candidate([\"A\",\"A\"],2) == 4\n",
+    "entry_point": "task_scheduler"
+  },
+  {
+    "id": "reorganize_string",
+    "prompt": "def reorganize_string(s: str) -> str:\n    \"\"\"\n    Rearrange s so no two adjacent characters are equal. Return the\n    lexicographically smallest valid result. Return \"\" if impossible.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(\"aab\") == \"aba\"\n    assert candidate(\"aaab\") == \"\"\n    assert candidate(\"aabb\") == \"abab\"\n    assert candidate(\"a\") == \"a\"\n    assert candidate(\"\") == \"\"\n    assert candidate(\"vvvlo\") == \"vlvov\"\n    assert candidate(\"abc\") == \"abc\"\n",
+    "entry_point": "reorganize_string"
+  },
+  {
+    "id": "lru_cache_simulation",
+    "prompt": "def lru_cache_simulation(capacity: int, operations: list) -> list:\n    \"\"\"\n    Simulate an LRU cache. Operations are ('put', key, value) and\n    ('get', key). get returns the value or -1 and makes a hit most-recent.\n    put updates an existing key and makes it most-recent. When full, evict\n    the least-recent key. Return outputs for get operations only.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(2,[(\"put\",1,1),(\"put\",2,2),(\"get\",1),(\"put\",3,3),(\"get\",2),(\"get\",3),(\"get\",1)]) == [1,-1,3,1]\n    assert candidate(1,[(\"put\",1,1),(\"put\",2,2),(\"get\",1),(\"get\",2)]) == [-1,2]\n    assert candidate(2,[(\"get\",1)]) == [-1]\n",
+    "entry_point": "lru_cache_simulation"
+  },
+  {
+    "id": "frequency_stack",
+    "prompt": "def frequency_stack(operations: list) -> list:\n    \"\"\"\n    Simulate a frequency stack. Operations are ('push', value) and ('pop',).\n    pop removes the most frequent value; ties are broken by most recent push.\n    Return values removed by pop operations.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([(\"push\",5),(\"push\",7),(\"push\",5),(\"push\",7),(\"push\",4),(\"push\",5),(\"pop\",),(\"pop\",),(\"pop\",),(\"pop\",)]) == [5,7,5,4]\n    assert candidate([(\"push\",1),(\"pop\",)]) == [1]\n",
+    "entry_point": "frequency_stack"
+  },
+  {
+    "id": "median_stream",
+    "prompt": "def median_stream(values: list) -> list:\n    \"\"\"\n    Insert values one by one and return the median after every insertion. For\n    an even number of values, use the arithmetic mean of the two middle values.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3,4]) == [1,1.5,2,2.5]\n    assert candidate([5,15,1,3]) == [5,10,5,4]\n    assert candidate([]) == []\n",
+    "entry_point": "median_stream"
+  },
+  {
+    "id": "interval_room_schedule",
+    "prompt": "def interval_room_schedule(intervals: list) -> int:\n    \"\"\"\n    Return the minimum number of rooms required for half-open intervals\n    [start,end), where an interval ending at t does not conflict with one\n    starting at t.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([[0,30],[5,10],[15,20]]) == 2\n    assert candidate([[1,5],[5,10]]) == 1\n    assert candidate([]) == 0\n    assert candidate([[0,0],[0,1]]) == 1\n",
+    "entry_point": "interval_room_schedule"
+  },
+  {
+    "id": "gas_station_total_balance",
+    "prompt": "def gas_station_total_balance(gas: list, cost: list) -> int:\n    \"\"\"\n    Return total gas minus total cost around the circular route. This is a\n    deliberately simple arithmetic baseline.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3],[3,2,1]) == 0\n    assert candidate([5],[7]) == -2\n    assert candidate([2,3],[1,4]) == 0\n",
+    "entry_point": "gas_station_total_balance"
+  },
+  {
+    "id": "prefix_sum_queries",
+    "prompt": "def prefix_sum_queries(nums: list, queries: list) -> list:\n    \"\"\"\n    queries contains [left,right] inclusive. Return the sum nums[left:right+1]\n    for every query. Do not mutate nums.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,3,4,5],[[0,2],[1,3],[4,4]]) == [6,9,5]\n    assert candidate([],[]) == []\n    assert candidate([5],[[0,0]]) == [5]\n    assert candidate([-1,2,-3],[[0,2],[1,2]]) == [-2,-1]\n",
+    "entry_point": "prefix_sum_queries"
+  },
+  {
+    "id": "range_addition",
+    "prompt": "def range_addition(length: int, updates: list) -> list:\n    \"\"\"\n    Start with length zeros. Each update [start,end,delta] adds delta to every\n    index in the inclusive range start..end. Return the final array.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate(5,[[1,3,2],[2,4,3],[0,2,-2]]) == [-2,0,3,5,3]\n    assert candidate(3,[]) == [0,0,0]\n    assert candidate(1,[[0,0,5]]) == [5]\n",
+    "entry_point": "range_addition"
+  },
+  {
+    "id": "count_subarrays_sum_k",
+    "prompt": "def count_subarrays_sum_k(nums: list, k: int) -> int:\n    \"\"\"\n    Return the number of contiguous subarrays whose sum equals k. Values may\n    be negative, zero, or positive.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,1,1],2) == 2\n    assert candidate([1,2,3],3) == 2\n    assert candidate([1,-1,0],0) == 3\n    assert candidate([],0) == 0\n",
+    "entry_point": "count_subarrays_sum_k"
+  },
+  {
+    "id": "subarray_product_less_k",
+    "prompt": "def subarray_product_less_k(nums: list, k: int) -> int:\n    \"\"\"\n    nums contains positive integers. Return the number of contiguous subarrays\n    whose product is strictly less than k.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([10,5,2,6],100) == 8\n    assert candidate([1,1,1],1) == 0\n    assert candidate([1,2,3],0) == 0\n    assert candidate([3,4,5],100) == 6\n",
+    "entry_point": "subarray_product_less_k"
+  },
+  {
+    "id": "daily_stock_span",
+    "prompt": "def daily_stock_span(prices: list) -> list:\n    \"\"\"\n    For each price, return the number of consecutive previous days, including\n    today, whose price was less than or equal to today's price.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([100,80,60,70,60,75,85]) == [1,1,1,2,1,4,6]\n    assert candidate([10,4,5,90,120,80]) == [1,1,2,4,5,1]\n    assert candidate([]) == []\n",
+    "entry_point": "daily_stock_span"
+  },
+  {
+    "id": "next_greater_element",
+    "prompt": "def next_greater_element(nums: list) -> list:\n    \"\"\"\n    For each position return the first strictly greater value to its right,\n    or -1 if none exists.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,1,2,4,3]) == [4,2,4,-1,-1]\n    assert candidate([1,2,3,4]) == [2,3,4,-1]\n    assert candidate([4,3,2,1]) == [-1,-1,-1,-1]\n    assert candidate([]) == []\n",
+    "entry_point": "next_greater_element"
+  },
+  {
+    "id": "next_greater_circular",
+    "prompt": "def next_greater_circular(nums: list) -> list:\n    \"\"\"\n    Treat nums as circular. For each position return the first strictly\n    greater value encountered moving right, wrapping at most once, or -1.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([1,2,1]) == [2,-1,2]\n    assert candidate([1,2,3,4,3]) == [2,3,4,-1,4]\n    assert candidate([5,4,3,2,1]) == [-1,5,5,5,5]\n    assert candidate([]) == []\n",
+    "entry_point": "next_greater_circular"
+  },
+  {
+    "id": "daily_temperatures_variant",
+    "prompt": "def daily_temperatures_variant(temperatures: list) -> list:\n    \"\"\"\n    Return the distance to the next temperature that is at least 5 degrees\n    warmer, or 0 if none exists.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([70,72,75,74,80]) == [2,3,2,1,0]\n    assert candidate([80,79,78]) == [0,0,0]\n    assert candidate([]) == []\n    assert candidate([70,75]) == [1,0]\n    assert candidate([70,74,75]) == [2,0,0]\n",
+    "entry_point": "daily_temperatures_variant"
+  },
+  {
+    "id": "house_robber_circular",
+    "prompt": "def house_robber_circular(nums: list) -> int:\n    \"\"\"\n    Houses are arranged in a circle. Return the maximum sum of non-adjacent\n    house values, where the first and last houses are adjacent.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([2,3,2]) == 3\n    assert candidate([1,2,3,1]) == 4\n    assert candidate([1,2,3]) == 3\n    assert candidate([]) == 0\n    assert candidate([5]) == 5\n",
+    "entry_point": "house_robber_circular"
+  },
+  {
+    "id": "circular_queue_simulation",
+    "prompt": "def circular_queue_simulation(operations: list, capacity: int) -> list:\n    \"\"\"\n    Simulate a fixed-capacity FIFO queue. Operations are ('enqueue', x),\n    ('dequeue',), and ('front',). Enqueue on a full queue is ignored.\n    Dequeue/front on an empty queue append -1. Return outputs from dequeue\n    and front operations.\n    \"\"\"\n",
+    "check": "def check(candidate):\n    assert candidate([(\"enqueue\",1),(\"enqueue\",2),(\"front\",),(\"dequeue\",),(\"enqueue\",3),(\"front\",)],2) == [1,1,2]\n    assert candidate([(\"dequeue\",),(\"front\",)],1) == [-1,-1]\n    assert candidate([(\"enqueue\",1),(\"enqueue\",2),(\"enqueue\",3),(\"dequeue\",),(\"dequeue\",)],2) == [1,2]\n",
+    "entry_point": "circular_queue_simulation"
+  }
+]
