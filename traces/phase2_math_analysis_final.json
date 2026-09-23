@@ -1,0 +1,161 @@
+{
+  "n_records": 15,
+  "overall": {
+    "n": 15,
+    "layers": {
+      "layer_1": {
+        "n": 15,
+        "accuracy": 0.8666666666666667,
+        "correct": 13,
+        "incorrect": 2,
+        "mean_tokens": 576.0666666666667,
+        "median_tokens": 515.0,
+        "total_tokens": 8641,
+        "mean_latency_ms": 7709.910752864865,
+        "median_latency_ms": 8186.020458990242,
+        "total_latency_ms": 115648.66129297297
+      },
+      "layer_2": {
+        "n": 15,
+        "accuracy": 0.9333333333333333,
+        "correct": 14,
+        "incorrect": 1,
+        "mean_tokens": 812.0666666666667,
+        "median_tokens": 773.0,
+        "total_tokens": 12181,
+        "mean_latency_ms": 5284.241208331271,
+        "median_latency_ms": 3375.035334000131,
+        "total_latency_ms": 79263.61812496907
+      },
+      "layer_3": {
+        "n": 15,
+        "accuracy": 0.9333333333333333,
+        "correct": 14,
+        "incorrect": 1,
+        "mean_tokens": 879.1333333333333,
+        "median_tokens": 888.0,
+        "total_tokens": 13187,
+        "mean_latency_ms": 5177.742691599997,
+        "median_latency_ms": 3961.3981249858625,
+        "total_latency_ms": 77666.14037399995
+      },
+      "layer_4": {
+        "n": 15,
+        "accuracy": 1.0,
+        "correct": 15,
+        "incorrect": 0,
+        "mean_tokens": 1147.6666666666667,
+        "median_tokens": 631.0,
+        "total_tokens": 17215,
+        "mean_latency_ms": 39147.11368593271,
+        "median_latency_ms": 25465.53899999708,
+        "total_latency_ms": 587206.7052889906
+      }
+    },
+    "minimum_sufficient_layer_counts": {
+      "1": 13,
+      "2": 2,
+      "3": 0,
+      "4": 0,
+      "none": 0
+    },
+    "minimum_sufficient_layer_rates": {
+      "1": 0.8666666666666667,
+      "2": 0.13333333333333333,
+      "3": 0.0,
+      "4": 0.0,
+      "none": 0.0
+    },
+    "all_layers_failed": 0,
+    "all_layers_failed_rate": 0.0,
+    "beneficial_escalations": 2,
+    "beneficial_escalation_rate": 0.13333333333333333,
+    "oracle_cascade_accuracy": 1.0,
+    "oracle_cascade_mean_tokens": 672.4,
+    "oracle_cascade_median_tokens": 629.0,
+    "oracle_cascade_total_tokens": 10086,
+    "oracle_cascade_mean_latency_ms": 8202.393066729806,
+    "oracle_cascade_median_latency_ms": 8427.353666018462,
+    "oracle_cascade_total_latency_ms": 123035.8960009471
+  },
+  "by_domain": {
+    "math": {
+      "n": 15,
+      "layers": {
+        "layer_1": {
+          "n": 15,
+          "accuracy": 0.8666666666666667,
+          "correct": 13,
+          "incorrect": 2,
+          "mean_tokens": 576.0666666666667,
+          "median_tokens": 515.0,
+          "total_tokens": 8641,
+          "mean_latency_ms": 7709.910752864865,
+          "median_latency_ms": 8186.020458990242,
+          "total_latency_ms": 115648.66129297297
+        },
+        "layer_2": {
+          "n": 15,
+          "accuracy": 0.9333333333333333,
+          "correct": 14,
+          "incorrect": 1,
+          "mean_tokens": 812.0666666666667,
+          "median_tokens": 773.0,
+          "total_tokens": 12181,
+          "mean_latency_ms": 5284.241208331271,
+          "median_latency_ms": 3375.035334000131,
+          "total_latency_ms": 79263.61812496907
+        },
+        "layer_3": {
+          "n": 15,
+          "accuracy": 0.9333333333333333,
+          "correct": 14,
+          "incorrect": 1,
+          "mean_tokens": 879.1333333333333,
+          "median_tokens": 888.0,
+          "total_tokens": 13187,
+          "mean_latency_ms": 5177.742691599997,
+          "median_latency_ms": 3961.3981249858625,
+          "total_latency_ms": 77666.14037399995
+        },
+        "layer_4": {
+          "n": 15,
+          "accuracy": 1.0,
+          "correct": 15,
+          "incorrect": 0,
+          "mean_tokens": 1147.6666666666667,
+          "median_tokens": 631.0,
+          "total_tokens": 17215,
+          "mean_latency_ms": 39147.11368593271,
+          "median_latency_ms": 25465.53899999708,
+          "total_latency_ms": 587206.7052889906
+        }
+      },
+      "minimum_sufficient_layer_counts": {
+        "1": 13,
+        "2": 2,
+        "3": 0,
+        "4": 0,
+        "none": 0
+      },
+      "minimum_sufficient_layer_rates": {
+        "1": 0.8666666666666667,
+        "2": 0.13333333333333333,
+        "3": 0.0,
+        "4": 0.0,
+        "none": 0.0
+      },
+      "all_layers_failed": 0,
+      "all_layers_failed_rate": 0.0,
+      "beneficial_escalations": 2,
+      "beneficial_escalation_rate": 0.13333333333333333,
+      "oracle_cascade_accuracy": 1.0,
+      "oracle_cascade_mean_tokens": 672.4,
+      "oracle_cascade_median_tokens": 629.0,
+      "oracle_cascade_total_tokens": 10086,
+      "oracle_cascade_mean_latency_ms": 8202.393066729806,
+      "oracle_cascade_median_latency_ms": 8427.353666018462,
+      "oracle_cascade_total_latency_ms": 123035.8960009471
+    }
+  }
+}

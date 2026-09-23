@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-import ast
-import json
 import re
-import sys
-import threading
 import time
-from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import ollama
 
 from config import MODEL_CONFIG
 from sandbox import run_check
 
+
+CLIENT = ollama.Client()
 
 LAYER_KEYS = (
     "layer_1",
@@ -22,22 +19,7 @@ LAYER_KEYS = (
     "layer_4",
 )
 
-LAYER_TIMEOUTS = {
-    "layer_1": 180.0,
-    "layer_2": 300.0,
-    "layer_3": 600.0,
-    "layer_4": 600.0,
-}
-
-LAYER_MAX_ATTEMPTS = {
-    "layer_1": 3,
-    "layer_2": 2,
-    "layer_3": 2,
-    "layer_4": 2,
-}
-
-DEFAULT_TIMEOUT_SECONDS = 300.0
-DEFAULT_MAX_ATTEMPTS = 2
+MAX_MODEL_ATTEMPTS = 4
 RETRY_DELAYS_SECONDS = (2.0, 5.0, 10.0)
 
 TRANSIENT_STATUS_CODES = {
@@ -85,192 +67,6 @@ ESCALATION_SYSTEM = (
     "Do not include explanations or test code."
 )
 
-CLIENTS: dict[float, ollama.Client] = {}
-
-
-def get_client(timeout: float) -> ollama.Client:
-    if timeout not in CLIENTS:
-        CLIENTS[timeout] = ollama.Client(timeout=timeout)
-
-    return CLIENTS[timeout]
-
-
-class ModelCallError(RuntimeError):
-    def __init__(
-        self,
-        message: str,
-        model_key: str,
-        model: str,
-        attempts: int,
-        latency_ms: float,
-    ) -> None:
-        super().__init__(message)
-        self.model_key = model_key
-        self.model = model
-        self.attempts = attempts
-        self.latency_ms = latency_ms
-
-
-class LiveReporter:
-    def __init__(self, total: int, enabled: bool = True) -> None:
-        self.total = total
-        self.enabled = enabled
-        self.completed = 0
-        self.correct = 0
-        self.escalated = 0
-        self.run_start = time.perf_counter()
-        self.stop_event = threading.Event()
-        self.ticker: threading.Thread | None = None
-        self.layer_start_time = 0.0
-        self.label = ""
-        self.is_tty = sys.stdout.isatty()
-
-    def problem_loaded(self, index: int, problem_id: str) -> None:
-        if not self.enabled:
-            return
-
-        print()
-        print(f"* [{index}/{self.total}] {problem_id}")
-        print("  Status: LOADED", flush=True)
-
-    def layer_start(self, layer_index: int, layer_name: str) -> None:
-        if not self.enabled:
-            return
-
-        self.label = f"SOLVING — L{layer_index + 1} {layer_name}"
-        self.restart_ticker()
-
-    def layer_complete(
-        self,
-        layer_index: int,
-        layer_name: str,
-        passed: bool,
-        tokens: int,
-        latency_ms: float,
-        retries: int = 0,
-    ) -> None:
-        if not self.enabled:
-            return
-
-        self.halt_ticker()
-
-        mark = "✓ PASS" if passed else "✗ FAIL"
-        retry_text = f" | retries={retries}" if retries else ""
-
-        print(
-            f"  {mark}  L{layer_index + 1} {layer_name} "
-            f"| {tokens:,} tok "
-            f"| {latency_ms / 1000:.1f}s"
-            f"{retry_text}",
-            flush=True,
-        )
-
-    def layer_error(
-        self,
-        layer_index: int,
-        layer_name: str,
-        message: str,
-        latency_ms: float,
-        attempts: int,
-    ) -> None:
-        if not self.enabled:
-            return
-
-        self.halt_ticker()
-
-        print(
-            f"  ✗ ERROR L{layer_index + 1} {layer_name} "
-            f"| {attempts} attempts "
-            f"| {latency_ms / 1000:.1f}s",
-            flush=True,
-        )
-        print(f"    {message}", flush=True)
-
-    def problem_done(
-        self,
-        correct: bool,
-        escalated: bool,
-        tokens: int,
-        seconds: float,
-        stop_reason: str,
-    ) -> None:
-        self.completed += 1
-        self.correct += int(correct)
-        self.escalated += int(escalated)
-
-        if not self.enabled:
-            return
-
-        verdict = "SOLVED — correct" if correct else "FAILED — incorrect"
-        symbol = "✓" if correct else "✗"
-        elapsed_min = (time.perf_counter() - self.run_start) / 60.0
-
-        print(f"  {symbol} {verdict}")
-        print(f"  Tokens: {tokens:,}")
-        print(f"  Time: {seconds:.1f}s")
-        print(f"  Stopped: {stop_reason}")
-        print(
-            f"  Progress: {self.completed}/{self.total} "
-            f"| Accuracy: {self.correct / self.completed:.1%} "
-            f"| Escalation: {self.escalated / self.completed:.1%} "
-            f"| Elapsed: {elapsed_min:.1f} min",
-            flush=True,
-        )
-
-    def tick(self) -> None:
-        while not self.stop_event.wait(0.5):
-            if self.is_tty:
-                elapsed = time.perf_counter() - self.layer_start_time
-                print(
-                    f"\r  Status: {self.label} | Elapsed: {elapsed:.1f}s",
-                    end="",
-                    flush=True,
-                )
-
-        if self.is_tty:
-            print("\r" + " " * 100 + "\r", end="", flush=True)
-
-    def restart_ticker(self) -> None:
-        self.halt_ticker()
-        self.stop_event.clear()
-        self.layer_start_time = time.perf_counter()
-        self.ticker = threading.Thread(
-            target=self.tick,
-            daemon=True,
-        )
-        self.ticker.start()
-
-    def halt_ticker(self) -> None:
-        self.stop_event.set()
-
-        if self.ticker is not None:
-            self.ticker.join()
-            self.ticker = None
-
-    def system_start(self, system: str) -> None:
-        if not self.enabled:
-            return
-
-        print()
-        print("=" * 72)
-        print(f"STARTING SYSTEM: {system.upper()}")
-        print("=" * 72, flush=True)
-
-    def system_done(self, system: str) -> None:
-        if not self.enabled or self.completed == 0:
-            return
-
-        elapsed_min = (time.perf_counter() - self.run_start) / 60.0
-
-        print()
-        print("-" * 72)
-        print(f"COMPLETED SYSTEM: {system.upper()}")
-        print(f"Problems: {self.completed}/{self.total}")
-        print(f"Accuracy: {self.correct / self.completed:.1%}")
-        print(f"Escalation rate: {self.escalated / self.completed:.1%}")
-        print(f"Runtime: {elapsed_min:.1f} min")
-        print("-" * 72, flush=True)
-
 
 def model_name(model_key: str) -> str:
     if model_key in MODEL_CONFIG:
@@ -309,10 +105,12 @@ def escalation_prompt(
     )
 
 
-def isolate_function(
+def _isolate_function(
     block: str,
     entry_point: str,
 ) -> str:
+    import ast
+
     try:
         tree = ast.parse(block)
     except SyntaxError:
@@ -373,13 +171,13 @@ def extract_code(
     if fenced_blocks:
         for block in fenced_blocks:
             if f"def {entry_point}" in block:
-                return isolate_function(
+                return _isolate_function(
                     block,
                     entry_point,
                 ).strip()
 
         for block in fenced_blocks:
-            isolated = isolate_function(
+            isolated = _isolate_function(
                 block,
                 entry_point,
             )
@@ -389,15 +187,17 @@ def extract_code(
 
         return fenced_blocks[0].strip()
 
-    function_start = text.find(f"def {entry_point}")
+    function_start = text.find(
+        f"def {entry_point}"
+    )
 
     if function_start != -1:
-        return isolate_function(
+        return _isolate_function(
             text[function_start:],
             entry_point,
         ).strip()
 
-    isolated = isolate_function(
+    isolated = _isolate_function(
         text,
         entry_point,
     )
@@ -408,7 +208,7 @@ def extract_code(
     return text.strip()
 
 
-def is_transient_ollama_error(exc: Exception) -> bool:
+def _is_transient_ollama_error(exc: Exception) -> bool:
     status_code = getattr(exc, "status_code", None)
 
     if status_code in TRANSIENT_STATUS_CODES:
@@ -428,23 +228,17 @@ def call_model(
     user_prompt: str,
     temperature: float = 0.0,
     seed: int = 42,
-    reporter: LiveReporter | None = None,
 ) -> dict[str, Any]:
     model = model_name(model_key)
-    timeout = LAYER_TIMEOUTS.get(model_key, DEFAULT_TIMEOUT_SECONDS)
-    max_attempts = LAYER_MAX_ATTEMPTS.get(model_key, DEFAULT_MAX_ATTEMPTS)
-    client = get_client(timeout)
-
     start = time.perf_counter()
     last_exception: Exception | None = None
-    response = None
     attempts = 0
 
-    for attempt in range(1, max_attempts + 1):
+    for attempt in range(1, MAX_MODEL_ATTEMPTS + 1):
         attempts = attempt
 
         try:
-            response = client.chat(
+            response = CLIENT.chat(
                 model=model,
                 messages=[
                     {
@@ -462,62 +256,51 @@ def call_model(
                 },
             )
             break
+
         except Exception as exc:
             last_exception = exc
-            elapsed_ms = (time.perf_counter() - start) * 1000.0
 
-            if not is_transient_ollama_error(exc):
-                raise ModelCallError(
-                    f"Non-transient error for '{model}' "
-                    f"(key='{model_key}'): {exc}",
-                    model_key,
-                    model,
-                    attempts,
-                    elapsed_ms,
+            if not _is_transient_ollama_error(exc):
+                raise RuntimeError(
+                    f"Ollama call failed for model '{model}' "
+                    f"(key='{model_key}'): {exc}"
                 ) from exc
 
-            if attempt >= max_attempts:
-                raise ModelCallError(
-                    f"Failed after {max_attempts} attempts for '{model}' "
-                    f"(key='{model_key}'): {exc}",
-                    model_key,
-                    model,
-                    attempts,
-                    elapsed_ms,
+            if attempt >= MAX_MODEL_ATTEMPTS:
+                raise RuntimeError(
+                    f"Ollama call failed after "
+                    f"{MAX_MODEL_ATTEMPTS} attempts for model "
+                    f"'{model}' (key='{model_key}'): {exc}"
                 ) from exc
 
-            delay = RETRY_DELAYS_SECONDS[
-                min(attempt - 1, len(RETRY_DELAYS_SECONDS) - 1)
-            ]
+            delay = RETRY_DELAYS_SECONDS[attempt - 1]
 
-            if reporter is not None and reporter.enabled:
-                reporter.halt_ticker()
-                print(
-                    f"  ! Attempt {attempt}/{max_attempts} failed "
-                    f"({timeout:.0f}s timeout): {exc}"
-                )
-                print(f"  ! Retrying in {delay:.0f}s...", flush=True)
-
+            print(
+                f"Ollama transient error for {model} "
+                f"(attempt {attempt}/{MAX_MODEL_ATTEMPTS}): {exc}"
+            )
+            print(f"Retrying in {delay:.0f}s...")
             time.sleep(delay)
 
-            if reporter is not None and reporter.enabled:
-                reporter.restart_ticker()
+    else:
+        raise RuntimeError(
+            f"Ollama call failed for model '{model}' "
+            f"(key='{model_key}'): {last_exception}"
+        ) from last_exception
 
-    if response is None:
-        raise ModelCallError(
-            f"No response for '{model}' (key='{model_key}'): "
-            f"{last_exception}",
-            model_key,
-            model,
-            attempts,
-            (time.perf_counter() - start) * 1000.0,
-        )
-
-    latency_ms = (time.perf_counter() - start) * 1000.0
+    latency_ms = (
+        time.perf_counter() - start
+    ) * 1000.0
 
     content = response.message.content or ""
-    prompt_tokens = int(response.prompt_eval_count or 0)
-    completion_tokens = int(response.eval_count or 0)
+
+    prompt_tokens = int(
+        response.prompt_eval_count or 0
+    )
+
+    completion_tokens = int(
+        response.eval_count or 0
+    )
 
     return {
         "model_key": model_key,
@@ -525,12 +308,13 @@ def call_model(
         "response": content,
         "input_tokens": prompt_tokens,
         "output_tokens": completion_tokens,
-        "total_tokens": prompt_tokens + completion_tokens,
+        "total_tokens": (
+            prompt_tokens + completion_tokens
+        ),
         "latency_ms": latency_ms,
         "attempts": attempts,
         "retries": attempts - 1,
         "seed": seed,
-        "error": "",
     }
 
 
@@ -551,7 +335,6 @@ def build_hop(
         "attempts": result.get("attempts", 1),
         "retries": result.get("retries", 0),
         "seed": result.get("seed", 42),
-        "model_error": result.get("error", ""),
         "candidate": code,
         "verification_passed": check["passed"],
         "verification_error": check["error"],
@@ -565,10 +348,9 @@ def run_layer(
     previous_check: dict[str, Any] | None,
     temperature: float,
     seed: int,
-    reporter: LiveReporter | None = None,
+    status_callback: Callable | None = None,
 ) -> tuple[dict[str, Any], str, dict[str, Any]]:
     layer_key = LAYER_KEYS[layer_index]
-    layer_name = MODEL_CONFIG[layer_key]["name"]
 
     if layer_index == 0:
         system_prompt = FIRST_HOP_SYSTEM
@@ -578,56 +360,29 @@ def run_layer(
         user_prompt = escalation_prompt(
             problem,
             previous_code or "",
-            previous_check["passed"] if previous_check else False,
-            previous_check["error"] if previous_check else "",
+            previous_check["passed"]
+            if previous_check
+            else False,
+            previous_check["error"]
+            if previous_check
+            else "",
         )
 
-    if reporter is not None:
-        reporter.layer_start(layer_index, layer_name)
-
-    try:
-        result = call_model(
-            model_key=layer_key,
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            temperature=temperature,
-            seed=seed,
-            reporter=reporter,
+    if status_callback is not None:
+        status_callback(
+            "layer_start",
+            layer_index,
+            layer_key,
+            None,
         )
-    except ModelCallError as exc:
-        if reporter is not None:
-            reporter.layer_error(
-                layer_index,
-                layer_name,
-                str(exc),
-                exc.latency_ms,
-                exc.attempts,
-            )
 
-        result = {
-            "model_key": exc.model_key,
-            "model": exc.model,
-            "response": "",
-            "input_tokens": 0,
-            "output_tokens": 0,
-            "total_tokens": 0,
-            "latency_ms": exc.latency_ms,
-            "attempts": exc.attempts,
-            "retries": max(exc.attempts - 1, 0),
-            "seed": seed,
-            "error": str(exc),
-        }
-
-        check = {
-            "passed": False,
-            "error": f"model_call_failed: {exc}",
-        }
-
-        return result, previous_code or "", check
-    except Exception:
-        if reporter is not None:
-            reporter.halt_ticker()
-        raise
+    result = call_model(
+        model_key=layer_key,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        temperature=temperature,
+        seed=seed,
+    )
 
     code = extract_code(
         result["response"],
@@ -639,17 +394,49 @@ def run_layer(
         code,
     )
 
-    if reporter is not None:
-        reporter.layer_complete(
+    if status_callback is not None:
+        status_callback(
+            "layer_complete",
             layer_index,
-            layer_name,
-            check["passed"],
-            result["total_tokens"],
-            result["latency_ms"],
-            result.get("retries", 0),
+            layer_key,
+            {
+                "passed": check["passed"],
+                "tokens": result["total_tokens"],
+                "latency_ms": result["latency_ms"],
+                "attempts": result.get("attempts", 1),
+                "retries": result.get("retries", 0),
+            },
         )
 
     return result, code, check
+
+
+def run_weak_only(
+    problem: dict[str, Any],
+    temperature: float = 0.0,
+    seed: int = 42,
+) -> dict[str, Any]:
+    return run_layer_only(
+        problem,
+        0,
+        temperature,
+        seed,
+        "layer_1_only",
+    )
+
+
+def run_strong_only(
+    problem: dict[str, Any],
+    temperature: float = 0.0,
+    seed: int = 42,
+) -> dict[str, Any]:
+    return run_layer_only(
+        problem,
+        3,
+        temperature,
+        seed,
+        "layer_4_only",
+    )
 
 
 def run_layer_only(
@@ -658,7 +445,6 @@ def run_layer_only(
     temperature: float,
     seed: int,
     system_name: str,
-    reporter: LiveReporter | None = None,
 ) -> dict[str, Any]:
     problem_start = time.perf_counter()
 
@@ -669,10 +455,11 @@ def run_layer_only(
         None,
         temperature,
         seed,
-        reporter,
     )
 
-    total_latency_ms = (time.perf_counter() - problem_start) * 1000.0
+    total_latency_ms = (
+        time.perf_counter() - problem_start
+    ) * 1000.0
 
     return {
         "problem_id": problem["id"],
@@ -684,7 +471,7 @@ def run_layer_only(
         "stop_reason": system_name,
         "total_tokens": result["total_tokens"],
         "total_latency_ms": total_latency_ms,
-        "strong_invoked": layer_index == 3,
+        "strong_invoked": system_name == "layer_4_only",
         "hops": [
             build_hop(
                 layer_index,
@@ -696,43 +483,11 @@ def run_layer_only(
     }
 
 
-def run_weak_only(
-    problem: dict[str, Any],
-    temperature: float = 0.0,
-    seed: int = 42,
-    reporter: LiveReporter | None = None,
-) -> dict[str, Any]:
-    return run_layer_only(
-        problem,
-        0,
-        temperature,
-        seed,
-        "layer_1_only",
-        reporter,
-    )
-
-
-def run_strong_only(
-    problem: dict[str, Any],
-    temperature: float = 0.0,
-    seed: int = 42,
-    reporter: LiveReporter | None = None,
-) -> dict[str, Any]:
-    return run_layer_only(
-        problem,
-        3,
-        temperature,
-        seed,
-        "layer_4_only",
-        reporter,
-    )
-
-
 def run_fixed_cascade(
     problem: dict[str, Any],
     temperature: float = 0.0,
     seed: int = 42,
-    reporter: LiveReporter | None = None,
+    status_callback: Callable | None = None,
 ) -> dict[str, Any]:
     problem_start = time.perf_counter()
 
@@ -751,7 +506,7 @@ def run_fixed_cascade(
             previous_check,
             temperature,
             seed,
-            reporter,
+            status_callback=status_callback,
         )
 
         hops.append(
@@ -769,7 +524,9 @@ def run_fixed_cascade(
         previous_code = code
         previous_check = check
 
-    total_latency_ms = (time.perf_counter() - problem_start) * 1000.0
+    total_latency_ms = (
+        time.perf_counter() - problem_start
+    ) * 1000.0
 
     return {
         "problem_id": problem["id"],
@@ -790,7 +547,8 @@ def run_execution_gated_cascade(
     problem: dict[str, Any],
     temperature: float = 0.0,
     seed: int = 42,
-    reporter: LiveReporter | None = None,
+    verbose: bool = False,
+    status_callback: Callable | None = None,
 ) -> dict[str, Any]:
     problem_start = time.perf_counter()
 
@@ -807,7 +565,7 @@ def run_execution_gated_cascade(
             previous_check,
             temperature,
             seed,
-            reporter,
+            status_callback=status_callback,
         )
 
         hops.append(
@@ -822,7 +580,9 @@ def run_execution_gated_cascade(
         total_tokens += result["total_tokens"]
 
         if check["passed"]:
-            total_latency_ms = (time.perf_counter() - problem_start) * 1000.0
+            total_latency_ms = (
+                time.perf_counter() - problem_start
+            ) * 1000.0
 
             return {
                 "problem_id": problem["id"],
@@ -831,7 +591,9 @@ def run_execution_gated_cascade(
                 "final_correct": True,
                 "final_error": "",
                 "escalated": layer_index > 0,
-                "stop_reason": f"layer_{layer_index + 1}_verification_pass",
+                "stop_reason": (
+                    f"layer_{layer_index + 1}_verification_pass"
+                ),
                 "total_tokens": total_tokens,
                 "total_latency_ms": total_latency_ms,
                 "strong_invoked": layer_index >= 2,
@@ -841,14 +603,24 @@ def run_execution_gated_cascade(
         previous_code = code
         previous_check = check
 
-    total_latency_ms = (time.perf_counter() - problem_start) * 1000.0
+    total_latency_ms = (
+        time.perf_counter() - problem_start
+    ) * 1000.0
 
     return {
         "problem_id": problem["id"],
         "system": "execution_gated",
         "final_code": previous_code or "",
-        "final_correct": previous_check["passed"],
-        "final_error": previous_check["error"],
+        "final_correct": (
+            previous_check["passed"]
+            if previous_check
+            else False
+        ),
+        "final_error": (
+            previous_check["error"]
+            if previous_check
+            else "No candidate produced"
+        ),
         "escalated": True,
         "stop_reason": "layer_4_verification_fail",
         "total_tokens": total_tokens,
@@ -868,56 +640,31 @@ RUNNERS = {
 }
 
 
-def append_record(
-    stream_dir: Path | None,
-    system: str,
-    record: dict[str, Any],
+def _print_experiment_header(
+    mode: str,
+    problems: list[dict[str, Any]],
+    temperature: float,
+    seed: int,
 ) -> None:
-    if stream_dir is None:
-        return
+    print()
+    print("=" * 72)
+    print("LLM-CASCADE — EXPERIMENT")
+    print("=" * 72)
+    print(f"Mode        : {mode}")
+    print(f"Problems    : {len(problems)}")
+    print(f"Temperature : {temperature}")
+    print(f"Seed        : {seed}")
+    print()
 
-    stream_dir.mkdir(parents=True, exist_ok=True)
-
-    path = stream_dir / f"stream_{system}.jsonl"
-
-    with path.open("a", encoding="utf-8") as file:
-        file.write(
-            json.dumps(
-                record,
-                ensure_ascii=False,
-                default=str,
-            )
-            + "\n"
+    for key in LAYER_KEYS:
+        model_config = MODEL_CONFIG[key]
+        print(
+            f"{model_config['name']:<16}: "
+            f"{model_config['model']}"
         )
 
-
-def load_completed_records(
-    stream_dir: Path | None,
-    system: str,
-) -> list[dict[str, Any]]:
-    if stream_dir is None:
-        return []
-
-    path = stream_dir / f"stream_{system}.jsonl"
-
-    if not path.exists():
-        return []
-
-    records = []
-
-    with path.open("r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
-
-            if not line:
-                continue
-
-            try:
-                records.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-
-    return records
+    print("=" * 72)
+    print()
 
 
 def run_baseline_suite(
@@ -925,9 +672,7 @@ def run_baseline_suite(
     mode: str = "all",
     temperature: float = 0.0,
     seed: int = 42,
-    verbose: bool = True,
-    stream_dir: Path | None = None,
-    resume: bool = False,
+    verbose: bool = False,
 ) -> dict[str, list[dict[str, Any]]]:
     if mode == "all":
         systems = (
@@ -939,70 +684,182 @@ def run_baseline_suite(
     elif mode in RUNNERS:
         systems = (mode,)
     else:
-        raise ValueError(f"Unknown experiment mode: {mode}")
+        raise ValueError(
+            f"Unknown experiment mode: {mode}"
+        )
+
+    if verbose:
+        _print_experiment_header(
+            mode,
+            problems,
+            temperature,
+            seed,
+        )
 
     results: dict[str, list[dict[str, Any]]] = {}
 
     for system in systems:
         runner = RUNNERS[system]
-        reporter = LiveReporter(
-            total=len(problems),
-            enabled=verbose,
-        )
+        records = []
+        completed = 0
+        correct = 0
+        escalated = 0
+        start_time = time.perf_counter()
 
-        records: list[dict[str, Any]] = []
-        done_ids: set[str] = set()
+        if verbose:
+            print(
+                f"STARTING SYSTEM: {system.upper()}"
+            )
+            print("-" * 72)
 
-        if resume:
-            wanted = {problem["id"] for problem in problems}
-            records = [
-                record
-                for record in load_completed_records(stream_dir, system)
-                if record.get("problem_id") in wanted
-            ]
-            done_ids = {record["problem_id"] for record in records}
+        for index, problem in enumerate(
+            problems,
+            start=1,
+        ):
+            if verbose:
+                print()
+                print("=" * 72)
+                print(
+                    f"[{system}] "
+                    f"{index}/{len(problems)} | "
+                    f"{problem['id']}"
+                )
+                print("=" * 72)
 
-            for record in records:
-                reporter.completed += 1
-                reporter.correct += int(record["final_correct"])
-                reporter.escalated += int(record["escalated"])
+            def status_callback(
+                event,
+                layer_index,
+                layer_key,
+                data,
+            ):
+                if not verbose:
+                    return
+
+                model_config = MODEL_CONFIG[layer_key]
+                layer_name = model_config["name"]
+                layer_number = layer_index + 1
+
+                if event == "layer_start":
+                    print(
+                        f"▶ Layer {layer_number}/4 "
+                        f"{layer_name:<18} RUNNING..."
+                    )
+
+                elif event == "layer_complete":
+                    symbol = (
+                        "✓"
+                        if data["passed"]
+                        else "✗"
+                    )
+
+                    retries = data.get(
+                        "retries",
+                        0,
+                    )
+
+                    retry_text = (
+                        f" | retries={retries}"
+                        if retries
+                        else ""
+                    )
+
+                    print(
+                        f"{symbol} "
+                        f"Layer {layer_number}/4 "
+                        f"{layer_name:<18} "
+                        f"{'PASS' if data['passed'] else 'FAIL':<4} "
+                        f"| {data['tokens']} tok "
+                        f"| {data['latency_ms'] / 1000:.1f}s"
+                        f"{retry_text}"
+                    )
+
+            runner_kwargs = {
+                "temperature": temperature,
+                "seed": seed,
+            }
+
+            if system in {
+                "fixed_cascade",
+                "execution_gated",
+            }:
+                runner_kwargs[
+                    "status_callback"
+                ] = status_callback
+
+            record = runner(
+                problem,
+                **runner_kwargs,
+            )
+
+            records.append(record)
+
+            completed += 1
+            correct += int(
+                record["final_correct"]
+            )
+            escalated += int(
+                record["escalated"]
+            )
+
+            accuracy = correct / completed
+            escalation_rate = (
+                escalated / completed
+            )
 
             if verbose:
+                final_status = (
+                    "CORRECT"
+                    if record["final_correct"]
+                    else "INCORRECT"
+                )
+
                 print(
-                    f"Resuming {system}: {len(done_ids)} problems already "
-                    f"complete, {len(problems) - len(done_ids)} remaining."
+                    f"→ {final_status} | "
+                    f"stopped: "
+                    f"{record['stop_reason']}"
                 )
 
-        reporter.system_start(system)
-
-        try:
-            for index, problem in enumerate(problems, start=1):
-                if problem["id"] in done_ids:
-                    continue
-
-                reporter.problem_loaded(index, problem["id"])
-
-                record = runner(
-                    problem,
-                    temperature=temperature,
-                    seed=seed,
-                    reporter=reporter,
+                print(
+                    f"Progress: "
+                    f"{completed}/{len(problems)} "
+                    f"| Accuracy: {accuracy:.1%} "
+                    f"| Escalation: "
+                    f"{escalation_rate:.1%} "
+                    f"| Elapsed: "
+                    f"{(time.perf_counter() - start_time) / 60:.1f} min"
                 )
-
-                records.append(record)
-                append_record(stream_dir, system, record)
-
-                reporter.problem_done(
-                    record["final_correct"],
-                    record["escalated"],
-                    record["total_tokens"],
-                    record["total_latency_ms"] / 1000.0,
-                    record["stop_reason"],
-                )
-        finally:
-            reporter.halt_ticker()
 
         results[system] = records
-        reporter.system_done(system)
+
+        if verbose:
+            total_elapsed = (
+                time.perf_counter()
+                - start_time
+            )
+
+            print()
+            print("-" * 72)
+            print(
+                f"COMPLETED SYSTEM: "
+                f"{system.upper()}"
+            )
+            print(
+                f"Problems: "
+                f"{completed}/{len(problems)}"
+            )
+            print(
+                f"Accuracy: "
+                f"{correct / completed:.1%}"
+            )
+            print(
+                f"Escalation rate: "
+                f"{escalated / completed:.1%}"
+            )
+            print(
+                f"Runtime: "
+                f"{total_elapsed / 60:.1f} min"
+            )
+            print("-" * 72)
+            print()
 
     return results

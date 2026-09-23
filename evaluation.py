@@ -3,41 +3,13 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from statistics import mean, median
 from typing import Any
+
+from metrics import summarize_records, summarize_run_records
 
 
 def utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-def _safe_run_id(run_id: str | None) -> str:
-    if run_id:
-        cleaned = "".join(
-            character
-            if character.isalnum() or character in "-_"
-            else "_"
-            for character in run_id
-        )
-
-        if cleaned:
-            return cleaned
-
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
-
-
-def _normalise_records(
-    records: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    normalised = []
-
-    for record in records:
-        if not isinstance(record, dict):
-            continue
-
-        normalised.append(record)
-
-    return normalised
 
 
 def _records_from_experiment(
@@ -46,7 +18,11 @@ def _records_from_experiment(
     records = experiment.get("records")
 
     if isinstance(records, list):
-        return _normalise_records(records)
+        return [
+            record
+            for record in records
+            if isinstance(record, dict)
+        ]
 
     results = experiment.get("results")
 
@@ -61,32 +37,35 @@ def _records_from_experiment(
                 if not isinstance(record, dict):
                     continue
 
-                item = dict(record)
-
-                if "system" not in item:
-                    item["system"] = system
-
-                flattened.append(item)
+                enriched = dict(record)
+                enriched.setdefault("system", system)
+                flattened.append(enriched)
 
         return flattened
 
-    if isinstance(results, list):
-        flattened = []
+    if not isinstance(results, list):
+        return []
 
-        for result in results:
-            if not isinstance(result, dict):
-                continue
+    flattened = []
 
-            if isinstance(result.get("records"), list):
-                for record in result["records"]:
-                    if isinstance(record, dict):
-                        flattened.append(record)
-            else:
-                flattened.append(result)
+    for result in results:
+        if not isinstance(result, dict):
+            continue
 
-        return flattened
+        if isinstance(result.get("runs"), list):
+            for run in result["runs"]:
+                if isinstance(run, dict):
+                    flattened.append(run)
 
-    return []
+        elif isinstance(result.get("records"), list):
+            for record in result["records"]:
+                if isinstance(record, dict):
+                    flattened.append(record)
+
+        else:
+            flattened.append(result)
+
+    return flattened
 
 
 def _run_records_from_experiment(
@@ -95,103 +74,63 @@ def _run_records_from_experiment(
     runs = experiment.get("run_records")
 
     if isinstance(runs, list):
-        return _normalise_records(runs)
+        return [
+            record
+            for record in runs
+            if isinstance(record, dict)
+        ]
 
-    return []
+    results = experiment.get("results")
 
+    if isinstance(results, dict):
+        extracted = []
 
-def _system_metrics(
-    records: list[dict[str, Any]],
-) -> dict[str, Any]:
-    if not records:
-        return {
-            "count": 0,
-            "accuracy": 0.0,
-            "error_rate": 0.0,
-            "mean_tokens": 0.0,
-            "median_tokens": 0.0,
-            "mean_latency_ms": 0.0,
-            "median_latency_ms": 0.0,
-            "escalation_rate": 0.0,
-            "strong_invocation_rate": 0.0,
-            "layer_invocation_rates": {},
-        }
-
-    correct_values = [
-        bool(record.get("final_correct", False))
-        for record in records
-    ]
-
-    token_values = [
-        int(record.get("total_tokens", 0) or 0)
-        for record in records
-    ]
-
-    latency_values = [
-        float(record.get("total_latency_ms", 0.0) or 0.0)
-        for record in records
-    ]
-
-    escalated_values = [
-        bool(record.get("escalated", False))
-        for record in records
-    ]
-
-    strong_values = [
-        bool(record.get("strong_invoked", False))
-        for record in records
-    ]
-
-    layer_counts = {
-        "layer_1": 0,
-        "layer_2": 0,
-        "layer_3": 0,
-        "layer_4": 0,
-    }
-
-    for record in records:
-        hops = record.get("hops", [])
-
-        if not isinstance(hops, list):
-            continue
-
-        seen_layers = set()
-
-        for hop in hops:
-            if not isinstance(hop, dict):
+        for system, system_records in results.items():
+            if not isinstance(system_records, list):
                 continue
 
-            model_key = hop.get("model_key")
+            for record in system_records:
+                if not isinstance(record, dict):
+                    continue
 
-            if model_key in layer_counts:
-                seen_layers.add(model_key)
+                if {
+                    "weak_correct",
+                    "final_correct",
+                    "escalated",
+                }.issubset(record):
+                    enriched = dict(record)
+                    enriched.setdefault("system", system)
+                    extracted.append(enriched)
 
-        for layer in seen_layers:
-            layer_counts[layer] += 1
+        return extracted
 
-    count = len(records)
+    if not isinstance(results, list):
+        return []
 
-    return {
-        "count": count,
-        "accuracy": sum(correct_values) / count,
-        "error_rate": 1.0 - (
-            sum(correct_values) / count
-        ),
-        "mean_tokens": mean(token_values),
-        "median_tokens": median(token_values),
-        "mean_latency_ms": mean(latency_values),
-        "median_latency_ms": median(latency_values),
-        "escalation_rate": (
-            sum(escalated_values) / count
-        ),
-        "strong_invocation_rate": (
-            sum(strong_values) / count
-        ),
-        "layer_invocation_rates": {
-            layer: layer_counts[layer] / count
-            for layer in layer_counts
-        },
-    }
+    extracted = []
+
+    for result in results:
+        if not isinstance(result, dict):
+            continue
+
+        run_records = result.get("run_records")
+
+        if isinstance(run_records, list):
+            extracted.extend(
+                record
+                for record in run_records
+                if isinstance(record, dict)
+            )
+            continue
+
+        if {
+            "weak_correct",
+            "final_correct",
+            "escalated",
+        }.issubset(result):
+            extracted.append(result)
+
+    return extracted
 
 
 def summarize_experiment(
@@ -200,215 +139,121 @@ def summarize_experiment(
     records = _records_from_experiment(experiment)
     run_records = _run_records_from_experiment(experiment)
 
-    mode = experiment.get("mode", "unknown")
+    mode = experiment.get(
+        "mode",
+        experiment.get("experiment", "unknown"),
+    )
 
     summary: dict[str, Any] = {
         "mode": mode,
         "timestamp": utc_timestamp(),
         "n_records": len(records),
+        "n_run_records": len(run_records),
     }
 
-    if isinstance(experiment.get("results"), dict):
-        system_summaries = {}
-
-        for system, system_records in experiment["results"].items():
-            if not isinstance(system_records, list):
-                continue
-
-            clean_records = _normalise_records(
-                system_records
-            )
-
-            system_summaries[system] = _system_metrics(
-                clean_records
-            )
-
-        summary["systems"] = system_summaries
-
-    else:
-        summary["record_metrics"] = _system_metrics(
+    if records:
+        summary["record_metrics"] = summarize_records(
             records
+        )
+    else:
+        summary["record_metrics"] = summarize_records(
+            []
         )
 
     if run_records:
-        summary["run_metrics"] = _summarize_run_records(
+        summary["run_metrics"] = summarize_run_records(
             run_records
         )
-
-    if not records and not run_records:
-        summary["record_metrics"] = _system_metrics([])
 
     return summary
 
 
-def _summarize_run_records(
-    records: list[dict[str, Any]],
+def summarize_results_by_system(
+    results: dict[str, list[dict[str, Any]]],
 ) -> dict[str, Any]:
-    if not records:
-        return {
-            "count": 0,
-            "final_accuracy": 0.0,
-            "escalation_rate": 0.0,
-            "mean_tokens": 0.0,
-            "median_tokens": 0.0,
-            "mean_latency_ms": 0.0,
-            "median_latency_ms": 0.0,
+    systems = {}
+
+    for system, records in results.items():
+        if not isinstance(records, list):
+            continue
+
+        valid_records = [
+            record
+            for record in records
+            if isinstance(record, dict)
+        ]
+
+        systems[system] = {
+            "n_records": len(valid_records),
+            "metrics": summarize_records(
+                valid_records
+            ),
         }
 
-    final_correct = [
-        bool(record.get("final_correct", False))
-        for record in records
-    ]
-
-    escalated = [
-        bool(record.get("escalated", False))
-        for record in records
-    ]
-
-    tokens = [
-        int(record.get("total_tokens", 0) or 0)
-        for record in records
-    ]
-
-    latency = [
-        float(record.get("total_latency_ms", 0.0) or 0.0)
-        for record in records
-    ]
-
-    count = len(records)
-
     return {
-        "count": count,
-        "final_accuracy": sum(final_correct) / count,
-        "escalation_rate": sum(escalated) / count,
-        "total_tokens": sum(tokens),
-        "mean_tokens": mean(tokens),
-        "median_tokens": median(tokens),
-        "mean_latency_ms": mean(latency),
-        "median_latency_ms": median(latency),
+        "timestamp": utc_timestamp(),
+        "systems": systems,
     }
 
 
 def format_summary(
     summary: dict[str, Any],
 ) -> str:
-    lines = []
+    lines = [
+        f"Mode: {summary.get('mode', 'unknown')}",
+        f"Records: {summary.get('n_records', 0)}",
+        f"Run records: {summary.get('n_run_records', 0)}",
+    ]
 
-    lines.append(
-        f"Mode: {summary.get('mode', 'unknown')}"
+    record_metrics = summary.get(
+        "record_metrics",
+        {},
     )
 
-    lines.append(
-        f"Records: {summary.get('n_records', 0)}"
-    )
+    if record_metrics:
+        lines.append("")
+        lines.append("Record metrics:")
 
-    systems = summary.get("systems", {})
-
-    if systems:
-        for system, metrics in systems.items():
-            lines.append("")
-            lines.append(system)
-
-            lines.append(
-                f"  Accuracy                 : "
-                f"{metrics['accuracy']:.4f}"
-            )
-
-            lines.append(
-                f"  Error rate               : "
-                f"{metrics['error_rate']:.4f}"
-            )
-
-            lines.append(
-                f"  Mean tokens/query       : "
-                f"{metrics['mean_tokens']:.2f}"
-            )
-
-            lines.append(
-                f"  Median tokens/query     : "
-                f"{metrics['median_tokens']:.2f}"
-            )
-
-            lines.append(
-                f"  Mean latency (ms)       : "
-                f"{metrics['mean_latency_ms']:.2f}"
-            )
-
-            lines.append(
-                f"  Median latency (ms)     : "
-                f"{metrics['median_latency_ms']:.2f}"
-            )
-
-            lines.append(
-                f"  Escalation rate          : "
-                f"{metrics['escalation_rate']:.4f}"
-            )
-
-            lines.append(
-                f"  Strong invocation rate  : "
-                f"{metrics['strong_invocation_rate']:.4f}"
-            )
-
-            layer_rates = metrics.get(
-                "layer_invocation_rates",
-                {},
-            )
-
-            if layer_rates:
-                lines.append(
-                    f"  Layer 1 invocation rate : "
-                    f"{layer_rates['layer_1']:.4f}"
-                )
-
-                lines.append(
-                    f"  Layer 2 invocation rate : "
-                    f"{layer_rates['layer_2']:.4f}"
-                )
-
-                lines.append(
-                    f"  Layer 3 invocation rate : "
-                    f"{layer_rates['layer_3']:.4f}"
-                )
-
-                lines.append(
-                    f"  Layer 4 invocation rate : "
-                    f"{layer_rates['layer_4']:.4f}"
-                )
-
-    else:
-        record_metrics = summary.get(
-            "record_metrics",
-            {},
+        accuracy = record_metrics.get(
+            "accuracy",
+            0.0,
+        )
+        mean_tokens = record_metrics.get(
+            "mean_tokens",
+            0.0,
+        )
+        median_tokens = record_metrics.get(
+            "median_tokens",
+            0.0,
+        )
+        mean_latency = record_metrics.get(
+            "mean_latency_ms",
+            0.0,
+        )
+        median_latency = record_metrics.get(
+            "median_latency_ms",
+            0.0,
+        )
+        strong_rate = record_metrics.get(
+            "strong_invocation_rate",
+            0.0,
+        )
+        escalation_rate = record_metrics.get(
+            "escalation_rate",
+            0.0,
         )
 
-        if record_metrics:
-            lines.append("")
-            lines.append("Record metrics:")
-
-            lines.append(
-                f"  Accuracy                 : "
-                f"{record_metrics.get('accuracy', 0.0):.4f}"
-            )
-
-            lines.append(
-                f"  Mean tokens/query       : "
-                f"{record_metrics.get('mean_tokens', 0.0):.2f}"
-            )
-
-            lines.append(
-                f"  Median tokens/query     : "
-                f"{record_metrics.get('median_tokens', 0.0):.2f}"
-            )
-
-            lines.append(
-                f"  Mean latency (ms)       : "
-                f"{record_metrics.get('mean_latency_ms', 0.0):.2f}"
-            )
-
-            lines.append(
-                f"  Median latency (ms)     : "
-                f"{record_metrics.get('median_latency_ms', 0.0):.2f}"
-            )
+        lines.extend(
+            [
+                f"  Accuracy                : {accuracy:.4f}",
+                f"  Mean tokens/query      : {mean_tokens:.2f}",
+                f"  Median tokens/query    : {median_tokens:.2f}",
+                f"  Mean latency (ms)      : {mean_latency:.2f}",
+                f"  Median latency (ms)    : {median_latency:.2f}",
+                f"  Escalation rate        : {escalation_rate:.4f}",
+                f"  Strong invocation rate : {strong_rate:.4f}",
+            ]
+        )
 
     run_metrics = summary.get(
         "run_metrics",
@@ -419,42 +264,78 @@ def format_summary(
         lines.append("")
         lines.append("Run metrics:")
 
-        lines.append(
-            f"  Final accuracy           : "
-            f"{run_metrics.get('final_accuracy', 0.0):.4f}"
+        weak_accuracy = run_metrics.get(
+            "weak_accuracy",
+            0.0,
+        )
+        final_accuracy = run_metrics.get(
+            "final_accuracy",
+            0.0,
+        )
+        recovery_rate = run_metrics.get(
+            "error_recovery_rate",
+            0.0,
+        )
+        escalation = run_metrics.get(
+            "escalation_rate",
+            0.0,
+        )
+        total_tokens = run_metrics.get(
+            "total_tokens",
+            0,
+        )
+        mean_tokens = run_metrics.get(
+            "mean_tokens",
+            0.0,
+        )
+        median_tokens = run_metrics.get(
+            "median_tokens",
+            0.0,
+        )
+        mean_latency = run_metrics.get(
+            "mean_latency_ms",
+            0.0,
+        )
+        median_latency = run_metrics.get(
+            "median_latency_ms",
+            0.0,
         )
 
-        lines.append(
-            f"  Escalation rate          : "
-            f"{run_metrics.get('escalation_rate', 0.0):.4f}"
-        )
-
-        lines.append(
-            f"  Total tokens             : "
-            f"{run_metrics.get('total_tokens', 0)}"
-        )
-
-        lines.append(
-            f"  Mean tokens/query        : "
-            f"{run_metrics.get('mean_tokens', 0.0):.2f}"
-        )
-
-        lines.append(
-            f"  Median tokens/query      : "
-            f"{run_metrics.get('median_tokens', 0.0):.2f}"
-        )
-
-        lines.append(
-            f"  Mean latency (ms)        : "
-            f"{run_metrics.get('mean_latency_ms', 0.0):.2f}"
-        )
-
-        lines.append(
-            f"  Median latency (ms)      : "
-            f"{run_metrics.get('median_latency_ms', 0.0):.2f}"
+        lines.extend(
+            [
+                f"  Weak accuracy           : {weak_accuracy:.4f}",
+                f"  Final accuracy          : {final_accuracy:.4f}",
+                f"  Error recovery rate     : {recovery_rate:.4f}",
+                f"  Escalation rate         : {escalation:.4f}",
+                f"  Total tokens            : {total_tokens}",
+                f"  Mean tokens/query       : {mean_tokens:.2f}",
+                f"  Median tokens/query     : {median_tokens:.2f}",
+                f"  Mean latency (ms)       : {mean_latency:.2f}",
+                f"  Median latency (ms)     : {median_latency:.2f}",
+            ]
         )
 
     return "\n".join(lines)
+
+
+def _safe_run_id(
+    run_id: str | None,
+) -> str:
+    if run_id:
+        cleaned = "".join(
+            character
+            if character.isalnum()
+            or character in "-_"
+            else "_"
+            for character in run_id
+        )
+
+        if cleaned:
+            return cleaned
+
+    return datetime.now().strftime(
+        "%Y%m%d_%H%M%S"
+    )
 
 
 def save_experiment_results(
@@ -464,13 +345,14 @@ def save_experiment_results(
     run_id: str | None = None,
 ) -> list[Path]:
     output_path = Path(output_dir)
-
     output_path.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    resolved_run_id = _safe_run_id(run_id)
+    resolved_run_id = _safe_run_id(
+        run_id
+    )
 
     experiment_path = (
         output_path
@@ -487,9 +369,12 @@ def save_experiment_results(
         / f"records_{resolved_run_id}.jsonl"
     )
 
-    experiment_payload = dict(experiment)
-
-    experiment_payload["saved_at"] = utc_timestamp()
+    experiment_payload = dict(
+        experiment
+    )
+    experiment_payload["saved_at"] = (
+        utc_timestamp()
+    )
 
     experiment_path.write_text(
         json.dumps(
@@ -539,12 +424,14 @@ def save_experiment_results(
 def print_summary(
     summary: dict[str, Any],
 ) -> None:
-    print(format_summary(summary))
+    print(
+        format_summary(summary)
+    )
 
 
 def build_experiment(
     mode: str,
-    results: dict[str, list[dict[str, Any]]],
+    results: dict[str, list[dict[str, Any]]] | list[dict[str, Any]],
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     experiment: dict[str, Any] = {
@@ -556,23 +443,51 @@ def build_experiment(
     if metadata:
         experiment["metadata"] = metadata
 
-    records = []
+    records: list[dict[str, Any]] = []
 
-    for system, system_records in results.items():
-        if not isinstance(system_records, list):
-            continue
-
-        for record in system_records:
-            if not isinstance(record, dict):
+    if isinstance(results, dict):
+        for system, system_records in results.items():
+            if not isinstance(system_records, list):
                 continue
 
-            item = dict(record)
+            for record in system_records:
+                if not isinstance(record, dict):
+                    continue
 
-            if "system" not in item:
-                item["system"] = system
+                enriched = dict(record)
+                enriched.setdefault(
+                    "system",
+                    system,
+                )
+                records.append(enriched)
 
-            records.append(item)
+    else:
+        for result in results:
+            if not isinstance(result, dict):
+                continue
 
-    experiment["records"] = records
+            nested_records = result.get(
+                "records"
+            )
+
+            if isinstance(
+                nested_records,
+                list,
+            ):
+                records.extend(
+                    record
+                    for record in nested_records
+                    if isinstance(
+                        record,
+                        dict,
+                    )
+                )
+            else:
+                records.append(
+                    result
+                )
+
+    if records:
+        experiment["records"] = records
 
     return experiment

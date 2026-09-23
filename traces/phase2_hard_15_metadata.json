@@ -1,0 +1,30 @@
+{
+  "created_at": 1790163423.654542,
+  "domain": "code",
+  "problem_file": "/tmp/code_phase2_hard_15.json",
+  "problem_count": 15,
+  "temperature": 0.2,
+  "seed": 42,
+  "layers": {
+    "layer_1": {
+      "model_key": "layer_1",
+      "model": "gpt-oss:20b-cloud",
+      "name": "gpt-oss-20b"
+    },
+    "layer_2": {
+      "model_key": "layer_2",
+      "model": "gemma4:cloud",
+      "name": "gemma4"
+    },
+    "layer_3": {
+      "model_key": "layer_3",
+      "model": "nemotron-3-super:cloud",
+      "name": "nemotron-3-super"
+    },
+    "layer_4": {
+      "model_key": "layer_4",
+      "model": "nemotron-3-ultra:cloud",
+      "name": "nemotron-3-ultra"
+    }
+  }
+}

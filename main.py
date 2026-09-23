@@ -2,40 +2,119 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
 from config import (
-    DEFAULT_PROBLEMS_FILE,
+    DEFAULT_DOMAIN,
+    DEFAULT_PROBLEM_FILES,
     DEFAULT_SEED,
     DEFAULT_TEMPERATURE,
     EXPERIMENT_MODES,
-    MODEL_CONFIG,
-)
-from evaluation import (
-    build_experiment,
-    format_summary,
-    save_experiment_results,
-    summarize_experiment,
+    SUPPORTED_DOMAINS,
 )
 from run_baselines import run_baseline_suite
 
 
-def parse_args() -> argparse.Namespace:
+def load_problems(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        raise FileNotFoundError(f"Problem file not found: {path}")
+
+    with path.open("r", encoding="utf-8") as handle:
+        data = json.load(handle)
+
+    if isinstance(data, dict):
+        if "problems" in data:
+            data = data["problems"]
+        else:
+            data = [data]
+
+    if not isinstance(data, list):
+        raise ValueError("Problem file must contain a JSON list or an object containing 'problems'.")
+
+    problems = []
+
+    for index, problem in enumerate(data):
+        if not isinstance(problem, dict):
+            raise ValueError(f"Problem at index {index} is not a JSON object.")
+
+        if "id" not in problem:
+            raise ValueError(f"Problem at index {index} is missing 'id'.")
+
+        problems.append(problem)
+
+    return problems
+
+
+def resolve_problem_file(
+    domain: str,
+    explicit_path: str | None,
+) -> Path:
+    if explicit_path:
+        return Path(explicit_path)
+
+    return DEFAULT_PROBLEM_FILES[domain]
+
+
+def print_summary(
+    results: dict[str, list[dict[str, Any]]],
+) -> None:
+    print()
+    print("=" * 72)
+    print("EXPERIMENT SUMMARY")
+    print("=" * 72)
+
+    for system, records in results.items():
+        if not records:
+            print(f"{system:<20} no records")
+            continue
+
+        correct = sum(
+            1
+            for record in records
+            if record.get("final_correct") is True
+        )
+
+        total_tokens = sum(
+            record.get("total_tokens", 0)
+            for record in records
+        )
+
+        escalated = sum(
+            1
+            for record in records
+            if record.get("escalated") is True
+        )
+
+        n = len(records)
+        accuracy = correct / n * 100.0
+        mean_tokens = total_tokens / n
+        escalation_rate = escalated / n * 100.0
+
+        print(
+            f"{system:<20} "
+            f"accuracy={accuracy:6.2f}% "
+            f"mean_tokens={mean_tokens:8.2f} "
+            f"escalation={escalation_rate:6.2f}%"
+        )
+
+    print("=" * 72)
+
+
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run LLM-Cascade Phase I experiments."
+        description="LLM-Cascade experiment runner."
     )
 
     parser.add_argument(
-        "--problems-file",
-        type=Path,
-        default=DEFAULT_PROBLEMS_FILE,
+        "--domain",
+        choices=SUPPORTED_DOMAINS,
+        default=DEFAULT_DOMAIN,
     )
 
     parser.add_argument(
-        "--limit",
-        type=int,
+        "--problems",
+        type=str,
         default=None,
     )
 
@@ -43,18 +122,6 @@ def parse_args() -> argparse.Namespace:
         "--mode",
         choices=EXPERIMENT_MODES,
         default="all",
-    )
-
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path("results"),
-    )
-
-    parser.add_argument(
-        "--run-id",
-        type=str,
-        default=None,
     )
 
     parser.add_argument(
@@ -70,256 +137,71 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--custom-prompt",
+        "--limit",
+        type=int,
+        default=None,
+    )
+
+    parser.add_argument(
+        "--output",
         type=str,
         default=None,
     )
 
     parser.add_argument(
-        "--custom-check",
-        type=str,
-        default=None,
-    )
-
-    parser.add_argument(
-        "--custom-entry-point",
-        type=str,
-        default=None,
-    )
-
-    parser.add_argument(
-        "--quiet",
+        "--verbose",
         action="store_true",
     )
 
-    parser.add_argument(
-        "--resume",
-        action="store_true",
+    args = parser.parse_args()
+
+    problem_path = resolve_problem_file(
+        args.domain,
+        args.problems,
     )
 
-    parser.add_argument(
-        "--problem-ids",
-        type=str,
-        default=None,
-    )
+    problems = load_problems(problem_path)
 
-    return parser.parse_args()
-
-
-def validate_args(args: argparse.Namespace) -> None:
-    if args.limit is not None and args.limit <= 0:
-        raise ValueError("--limit must be greater than 0.")
-
-    if args.temperature < 0:
-        raise ValueError("--temperature must be non-negative.")
-
-    custom_values = (
-        args.custom_prompt,
-        args.custom_check,
-        args.custom_entry_point,
-    )
-
-    custom_count = sum(value is not None for value in custom_values)
-
-    if custom_count not in (0, 3):
-        raise ValueError(
-            "--custom-prompt, --custom-check, and "
-            "--custom-entry-point must be provided together."
-        )
-
-    if custom_count == 0:
-        if not args.problems_file.exists():
-            raise FileNotFoundError(
-                f"Problems file not found: {args.problems_file}"
-            )
-
-        if not args.problems_file.is_file():
-            raise ValueError(
-                f"Problems path is not a file: {args.problems_file}"
-            )
-
-
-def load_problems(
-    problems_file: Path,
-    limit: int | None = None,
-    custom_prompt: str | None = None,
-    custom_check: str | None = None,
-    custom_entry_point: str | None = None,
-    problem_ids: list[str] | None = None
-) -> list[dict[str, Any]]:
-    if (
-        custom_prompt is not None
-        and custom_check is not None
-        and custom_entry_point is not None
-    ):
-        problems = [
-            {
-                "id": "custom_problem",
-                "name": "custom_problem",
-                "prompt": custom_prompt,
-                "check": custom_check,
-                "entry_point": custom_entry_point,
-            }
-        ]
-    else:
-        with problems_file.open("r", encoding="utf-8") as file:
-            data = json.load(file)
-
-        if not isinstance(data, list):
-            raise ValueError("Problems file must contain a JSON list.")
-
-        problems = data
-
-    if limit is not None:
-        problems = problems[:limit]
+    if args.limit is not None:
+        if args.limit <= 0:
+            raise ValueError("--limit must be greater than 0.")
+        problems = problems[:args.limit]
 
     if not problems:
-        raise ValueError("No problems loaded.")
-
-    if problem_ids:
-        wanted = set(problem_ids)
-        problems = [problem for problem in problems if problem["id"] in wanted]
-        missing = wanted - {problem["id"] for problem in problems}
-
-        if missing:
-            raise ValueError(f"Unknown problem ids: {sorted(missing)}")
-
-    return problems
-
-
-def print_experiment_header(
-    problems: list[dict[str, Any]],
-    args: argparse.Namespace,
-) -> None:
-    print()
-    print("=" * 80)
-    print("LLM-CASCADE — PHASE I EXPERIMENT")
-    print("=" * 80)
-    print(f"Problems       : {len(problems)}")
-    print(f"Problem source : {args.problems_file}")
-    print(f"Mode           : {args.mode}")
-
-    for index in range(1, 5):
-        layer = MODEL_CONFIG[f"layer_{index}"]
-        print(f"Layer {index}        : {layer['model']}")
-
-    print(f"Temperature    : {args.temperature}")
-    print(f"Seed           : {args.seed}")
-    print(f"Output         : {args.output_dir}")
-    print("=" * 80)
-    print()
-
-
-def print_loaded_problems(
-    problems: list[dict[str, Any]],
-) -> None:
-    print(f"Problems loaded: {len(problems)}")
-
-    preview = problems[:5]
-
-    for index, problem in enumerate(preview, start=1):
-        print(
-            f"  {index}. "
-            f"{problem.get('id', 'unknown')} "
-            f"({problem.get('entry_point', 'unknown')})"
-        )
-
-    remaining = len(problems) - len(preview)
-
-    if remaining > 0:
-        print(f"  ... and {remaining} more")
+        raise ValueError("No problems found.")
 
     print()
+    print("=" * 72)
+    print("LLM-CASCADE")
+    print("=" * 72)
+    print(f"Domain      : {args.domain}")
+    print(f"Problems    : {len(problems)}")
+    print(f"Problem file: {problem_path}")
+    print(f"Mode        : {args.mode}")
+    print(f"Temperature : {args.temperature}")
+    print(f"Seed        : {args.seed}")
+    print("=" * 72)
 
+    results = run_baseline_suite(
+        problems=problems,
+        mode=args.mode,
+        temperature=args.temperature,
+        seed=args.seed,
+        verbose=args.verbose,
+    )
 
-def main() -> int:
-    args = parse_args()
+    print_summary(results)
 
-    try:
-        validate_args(args)
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        problems = load_problems(
-            problems_file=args.problems_file,
-            limit=args.limit,
-            custom_prompt=args.custom_prompt,
-            custom_check=args.custom_check,
-            custom_entry_point=args.custom_entry_point,
-            problem_ids=(
-                [item.strip() for item in args.problem_ids.split(",") if item.strip()]
-                if args.problem_ids
-                else None
-            ),
-        )
-
-        print_experiment_header(
-            problems=problems,
-            args=args,
-        )
-
-        print_loaded_problems(problems)
-
-        results = run_baseline_suite(
-            problems=problems,
-            mode=args.mode,
-            temperature=args.temperature,
-            seed=args.seed,
-            verbose=not args.quiet,
-            stream_dir=args.output_dir,
-            resume=args.resume,
-        )
-
-        experiment = build_experiment(
-            mode=args.mode,
-            results=results,
-            metadata={
-                "problems_file": str(args.problems_file),
-                "temperature": args.temperature,
-                "seed": args.seed,
-                "n_problems": len(problems),
-            },
-        )
-
-        summary = summarize_experiment(experiment)
+        with output_path.open("w", encoding="utf-8") as handle:
+            json.dump(results, handle, indent=2, ensure_ascii=False)
 
         print()
-        print("=" * 80)
-        print("EXPERIMENT SUMMARY")
-        print("=" * 80)
-        print(format_summary(summary))
-
-        output_paths = save_experiment_results(
-            experiment=experiment,
-            summary=summary,
-            output_dir=args.output_dir,
-            run_id=args.run_id,
-        )
-
-        print()
-        print("Saved outputs:")
-
-        for path in output_paths:
-            print(f"  {path}")
-
-        print()
-        print("Experiment completed successfully.")
-
-        return 0
-
-    except KeyboardInterrupt:
-        print(
-            "\nExperiment interrupted. Partial records are in the "
-            "stream_*.jsonl files in the output directory.",
-            file=sys.stderr,
-        )
-        return 130
-
-    except Exception as exc:
-        print(
-            f"\nExperiment failed: {exc}",
-            file=sys.stderr,
-        )
-        return 1
+        print(f"Results written to: {output_path}")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

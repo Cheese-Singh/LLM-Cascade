@@ -1,0 +1,92 @@
+[
+  {
+    "id": "finance_101",
+    "prompt": "A company issues a bond with face value 1000, coupon rate 6% paid annually, and 5 years to maturity. If the market discount rate is 8%, what is the bond's price? Round to 2 decimal places.",
+    "answer": "920.15",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_102",
+    "prompt": "A project requires an initial investment of 200000 and returns 60000 per year for 5 years. What is the payback period in years?",
+    "answer": "3.33",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_103",
+    "prompt": "A company has EBIT of 400000, interest expense of 80000, and a tax rate of 25%. What is net income?",
+    "answer": "240000",
+    "tolerance": 0
+  },
+  {
+    "id": "finance_104",
+    "prompt": "An investor buys a stock for 50 rupees, receives 2 rupees in dividends over the year, and sells it for 54 rupees. What is the total return as a percentage?",
+    "answer": "12",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_105",
+    "prompt": "A company has 10 million shares outstanding, net income of 25 million rupees, and a P/E ratio of 18. What is the current share price?",
+    "answer": "45",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_106",
+    "prompt": "A firm's inventory turnover ratio is 8, and its cost of goods sold for the year is 1600000 rupees. What is the average inventory value?",
+    "answer": "200000",
+    "tolerance": 0
+  },
+  {
+    "id": "finance_107",
+    "prompt": "A perpetuity pays 5000 rupees per year forever, starting one year from now. If the discount rate is 8%, what is its present value?",
+    "answer": "62500",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_108",
+    "prompt": "A company's quick ratio is 1.2, current liabilities are 500000, and inventory is 150000. What are current assets?",
+    "answer": "750000",
+    "tolerance": 0
+  },
+  {
+    "id": "finance_109",
+    "prompt": "A machine costs 120000, has a salvage value of 20000, and a useful life of 5 years. Using straight-line depreciation, what is the annual depreciation expense?",
+    "answer": "20000",
+    "tolerance": 0
+  },
+  {
+    "id": "finance_110",
+    "prompt": "A company's weighted average cost of capital is 10%. It is evaluating a project with cash flows of -100000 at time 0, then 40000, 40000, and 40000 in years 1 through 3. What is the NPV?",
+    "answer": "-525.92",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_111",
+    "prompt": "A firm has a return on equity of 15% and a retention ratio of 60%. What is the sustainable growth rate as a percentage?",
+    "answer": "9",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_112",
+    "prompt": "An investor holds a portfolio that is 60% stocks with an expected return of 12% and 40% bonds with an expected return of 5%. What is the portfolio's expected return as a percentage?",
+    "answer": "9.2",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_113",
+    "prompt": "A company's total asset turnover ratio is 2.5, and its total assets are 800000 rupees. What is its revenue?",
+    "answer": "2000000",
+    "tolerance": 0
+  },
+  {
+    "id": "finance_114",
+    "prompt": "A bond pays semiannual coupons of 40 rupees, has a face value of 1000, and 3 years to maturity. If the annual market yield is 10% (5% per period), what is the bond's price? Round to 2 decimal places.",
+    "answer": "949.24",
+    "tolerance": 0.01
+  },
+  {
+    "id": "finance_115",
+    "prompt": "A company has an accounts receivable balance of 300000 and annual credit sales of 3650000. What is the average collection period in days, assuming a 365-day year?",
+    "answer": "30",
+    "tolerance": 0.01
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "hard_001",
+    "prompt": "A disease affects 1% of a population. A diagnostic test has 99% sensitivity (true positive rate) and 95% specificity (true negative rate). If a random person tests positive, what is the probability they actually have the disease? Give the answer as a decimal.",
+    "answer": "0.16666666666666666",
+    "tolerance": 1e-3,
+    "verifier": "numeric",
+    "difficulty_type": "base_rate_bayes_trap"
+  },
+  {
+    "id": "hard_002",
+    "prompt": "An item's price starts at 200 rupees. It increases by 50%, and then decreases by 40% from the new price. What is the final price?",
+    "answer": "180",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "compound_percentage_trap"
+  },
+  {
+    "id": "hard_003",
+    "prompt": "Class A has 20 students with an average score of 70. Class B has 30 students with an average score of 85. What is the average score of all 50 students combined?",
+    "answer": "79",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "weighted_average_trap"
+  },
+  {
+    "id": "hard_004",
+    "prompt": "Pipe A can fill a tank in 6 hours. Pipe B can fill the same tank in 10 hours. If both pipes are opened together, how many hours does it take to fill the tank? Give the answer as a decimal.",
+    "answer": "3.75",
+    "tolerance": 1e-9,
+    "verifier": "numeric",
+    "difficulty_type": "work_rate_trap"
+  },
+  {
+    "id": "hard_005",
+    "prompt": "An urn contains 6 white balls and 4 black balls. Two balls are drawn one at a time without replacement. Given that the first ball drawn is white, what is the probability that the second ball drawn is black? Give the answer as a decimal.",
+    "answer": "0.4444444444444444",
+    "tolerance": 1e-4,
+    "verifier": "numeric",
+    "difficulty_type": "conditional_probability_trap"
+  },
+  {
+    "id": "hard_006",
+    "prompt": "A radioactive substance has a half-life of 8 years. Starting with 500 grams, how many grams remain after 20 years? Give the answer as a decimal.",
+    "answer": "88.38834764831844",
+    "tolerance": 0.01,
+    "verifier": "numeric",
+    "difficulty_type": "exponential_decay_noninteger_exponent"
+  },
+  {
+    "id": "hard_007",
+    "prompt": "Let f(x) = x^3 - 12x + 5. Find the local minimum value of f(x) for x > 0.",
+    "answer": "-11",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "optimization_critical_point_trap"
+  },
+  {
+    "id": "hard_008",
+    "prompt": "In how many distinct ways can 6 people be seated around a circular table, if seatings that are rotations of each other are considered identical?",
+    "answer": "120",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "circular_permutation_trap"
+  },
+  {
+    "id": "hard_009",
+    "prompt": "How many liters of pure water must be added to 30 liters of a 40% acid solution to reduce the concentration to 25% acid?",
+    "answer": "18",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "mixture_dilution_trap"
+  },
+  {
+    "id": "hard_010",
+    "prompt": "A sequence is defined by a_1 = 1 and a_(n+1) = a_n + 2n + 1 for n >= 1. What is a_20?",
+    "answer": "400",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "telescoping_recursion_trap"
+  },
+  {
+    "id": "hard_011",
+    "prompt": "Train A departs from a station at time t=0 and travels at 60 km/h. Train B starts 50 km behind Train A's starting point (in the same direction of travel) and departs 1 hour after Train A, traveling at 75 km/h. How many hours after Train A departs does Train B catch up to Train A? Give the answer as a decimal.",
+    "answer": "8.333333333333334",
+    "tolerance": 0.01,
+    "verifier": "numeric",
+    "difficulty_type": "relative_motion_delayed_start_trap"
+  },
+  {
+    "id": "hard_012",
+    "prompt": "A fair 6-sided die is rolled 3 times. What is the expected value of the maximum of the three rolls? Give the answer as a decimal.",
+    "answer": "4.958333333333333",
+    "tolerance": 1e-9,
+    "verifier": "numeric",
+    "difficulty_type": "order_statistic_expectation_trap"
+  },
+  {
+    "id": "hard_013",
+    "prompt": "Two positive integers have a GCD of 12 and an LCM of 720. If one of the numbers is 48, what is the other number?",
+    "answer": "180",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "gcd_lcm_identity_trap"
+  },
+  {
+    "id": "hard_014",
+    "prompt": "A city's population is 250000. It grows by 8% in year 1, declines by 5% in year 2, and grows by 3% in year 3. What is the population at the end of year 3, rounded to the nearest integer?",
+    "answer": "264195",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "sequential_percentage_rounding_trap"
+  },
+  {
+    "id": "hard_015",
+    "prompt": "A store sells pens for $3, notebooks for $5, and folders for $2. A customer buys 20 items total for $73, and the number of pens bought is exactly 3 times the number of folders bought. How many notebooks did the customer buy?",
+    "answer": "8",
+    "tolerance": 0,
+    "verifier": "numeric",
+    "difficulty_type": "linear_system_trap"
+  }
+]

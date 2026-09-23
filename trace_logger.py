@@ -1,150 +1,242 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+import time
 from pathlib import Path
 from typing import Any
 
 
-def utc_timestamp() -> str:
-    return datetime.now(timezone.utc).isoformat()
+class TraceLogger:
+    def __init__(
+        self,
+        trace_dir: str | Path = "traces",
+        run_id: str | None = None,
+    ) -> None:
+        self.trace_dir = Path(trace_dir)
+        self.trace_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
-
-def create_trace(
-    problem_id: str,
-    model: str,
-    input_tokens: int,
-    output_tokens: int,
-    total_tokens: int,
-    latency_ms: float,
-    answer: str,
-    correct: bool | None = None,
-    escalated: bool = False,
-    verification_passed: bool | None = None,
-    **extra: Any,
-) -> dict[str, Any]:
-    trace = {
-        "timestamp": utc_timestamp(),
-        "problem_id": problem_id,
-        "model": model,
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "total_tokens": total_tokens,
-        "latency_ms": latency_ms,
-        "answer": answer,
-        "correct": correct,
-        "escalated": escalated,
-        "verification_passed": verification_passed,
-    }
-    trace.update(extra)
-    return trace
-
-
-def create_run_trace(
-    problem_id: str,
-    weak_correct: bool | None,
-    strong_correct: bool | None,
-    final_correct: bool | None,
-    total_tokens: int,
-    total_latency_ms: float,
-    escalated: bool,
-    **extra: Any,
-) -> dict[str, Any]:
-    trace = {
-        "timestamp": utc_timestamp(),
-        "problem_id": problem_id,
-        "weak_correct": weak_correct,
-        "strong_correct": strong_correct,
-        "final_correct": final_correct,
-        "total_tokens": total_tokens,
-        "total_latency_ms": total_latency_ms,
-        "escalated": escalated,
-    }
-    trace.update(extra)
-    return trace
-
-
-def save_jsonl(
-    records: list[dict[str, Any]],
-    path: str | Path,
-) -> Path:
-    output_path = Path(path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with output_path.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
-        for record in records:
-            file.write(
-                json.dumps(
-                    record,
-                    ensure_ascii=False,
-                )
-                + "\n"
+        if run_id is None:
+            run_id = time.strftime(
+                "%Y%m%d_%H%M%S"
             )
 
-    return output_path
+        self.run_id = run_id
+        self.records: list[dict[str, Any]] = []
 
+    def start_problem(
+        self,
+        problem_id: str,
+        domain: str = "code",
+    ) -> dict[str, Any]:
+        trace = {
+            "problem_id": problem_id,
+            "domain": domain,
+            "started_at": time.time(),
+            "hops": [],
+        }
 
-def append_jsonl(
-    record: dict[str, Any],
-    path: str | Path,
-) -> Path:
-    output_path = Path(path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+        self.records.append(trace)
+        return trace
 
-    with output_path.open(
-        "a",
-        encoding="utf-8",
-    ) as file:
-        file.write(
+    def log_hop(
+        self,
+        trace: dict[str, Any],
+        *,
+        layer: int,
+        model_key: str,
+        model: str,
+        candidate: str,
+        verification_passed: bool,
+        verification_error: str = "",
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        total_tokens: int = 0,
+        latency_ms: float = 0.0,
+        attempts: int = 1,
+        retries: int = 0,
+        stop_reason: str | None = None,
+    ) -> dict[str, Any]:
+        hop = {
+            "layer": layer,
+            "model_key": model_key,
+            "model": model,
+            "candidate": candidate,
+            "verification_passed": verification_passed,
+            "verification_error": verification_error,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": total_tokens,
+            "latency_ms": latency_ms,
+            "attempts": attempts,
+            "retries": retries,
+            "stop_reason": stop_reason,
+            "timestamp": time.time(),
+        }
+
+        trace.setdefault(
+            "hops",
+            [],
+        ).append(hop)
+
+        return hop
+
+    def finish_problem(
+        self,
+        trace: dict[str, Any],
+        *,
+        final_correct: bool,
+        final_error: str = "",
+        stop_reason: str = "",
+    ) -> dict[str, Any]:
+        trace["finished_at"] = time.time()
+        trace["duration_ms"] = (
+            trace["finished_at"]
+            - trace["started_at"]
+        ) * 1000.0
+
+        trace["final_correct"] = final_correct
+        trace["final_error"] = final_error
+        trace["stop_reason"] = stop_reason
+        trace["n_hops_used"] = len(
+            trace.get("hops", [])
+        )
+
+        trace["total_tokens"] = sum(
+            hop.get(
+                "total_tokens",
+                0,
+            )
+            for hop in trace.get(
+                "hops",
+                [],
+            )
+        )
+
+        trace["total_latency_ms"] = sum(
+            hop.get(
+                "latency_ms",
+                0.0,
+            )
+            for hop in trace.get(
+                "hops",
+                [],
+            )
+        )
+
+        trace["escalated"] = (
+            trace["n_hops_used"] > 1
+        )
+
+        trace["strong_invoked"] = any(
+            hop.get("layer", 1) >= 3
+            for hop in trace.get(
+                "hops",
+                [],
+            )
+        )
+
+        return trace
+
+    def log_record(
+        self,
+        record: dict[str, Any],
+    ) -> None:
+        self.records.append(record)
+
+    def write(
+        self,
+        filename: str | None = None,
+    ) -> Path:
+        if filename is None:
+            filename = (
+                f"trace_{self.run_id}.json"
+            )
+
+        path = self.trace_dir / filename
+
+        payload = {
+            "run_id": self.run_id,
+            "created_at": time.time(),
+            "n_records": len(
+                self.records
+            ),
+            "records": self.records,
+        }
+
+        path.write_text(
             json.dumps(
-                record,
+                payload,
+                indent=2,
                 ensure_ascii=False,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
+
+        return path
+
+    def write_jsonl(
+        self,
+        filename: str | None = None,
+    ) -> Path:
+        if filename is None:
+            filename = (
+                f"trace_{self.run_id}.jsonl"
             )
-            + "\n"
-        )
 
-    return output_path
+        path = self.trace_dir / filename
 
-
-def load_jsonl(
-    path: str | Path,
-) -> list[dict[str, Any]]:
-    input_path = Path(path)
-
-    if not input_path.exists():
-        raise FileNotFoundError(
-            f"Trace file not found: {input_path}"
-        )
-
-    records = []
-
-    with input_path.open(
-        "r",
-        encoding="utf-8",
-    ) as file:
-        for line_number, line in enumerate(file, start=1):
-            line = line.strip()
-
-            if not line:
-                continue
-
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise ValueError(
-                    f"Invalid JSON on line {line_number} "
-                    f"of {input_path}: {exc}"
-                ) from exc
-
-            if not isinstance(record, dict):
-                raise ValueError(
-                    f"Line {line_number} of {input_path} "
-                    "must contain a JSON object."
+        with path.open(
+            "w",
+            encoding="utf-8",
+        ) as handle:
+            for record in self.records:
+                handle.write(
+                    json.dumps(
+                        record,
+                        ensure_ascii=False,
+                        default=str,
+                    )
+                    + "\n"
                 )
 
-            records.append(record)
+        return path
 
-    return records
+
+def load_trace_file(
+    path: str | Path,
+) -> dict[str, Any]:
+    path = Path(path)
+
+    return json.loads(
+        path.read_text(
+            encoding="utf-8"
+        )
+    )
+
+
+def flatten_trace_records(
+    trace_data: dict[str, Any],
+) -> list[dict[str, Any]]:
+    records = trace_data.get(
+        "records",
+        [],
+    )
+
+    if not isinstance(
+        records,
+        list,
+    ):
+        return []
+
+    return [
+        record
+        for record in records
+        if isinstance(
+            record,
+            dict,
+        )
+    ]
