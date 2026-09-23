@@ -67,7 +67,7 @@ The experiments use four model layers:
 Phase II generation settings:
 
 ```text
-Temperature: 0.0
+Temperature: 0.2
 Seed: 42
 ```
 
