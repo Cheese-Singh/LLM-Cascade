@@ -1,0 +1,126 @@
+{
+  "layer_1": {
+    "layer_key": "layer_1",
+    "signals": [
+      "confidence",
+      "answer_similarity_previous",
+      "response_length_score",
+      "numeric_density",
+      "reasoning_structure_score",
+      "final_answer_presence",
+      "is_arithmetic",
+      "is_span",
+      "hedging_score",
+      "answer_conciseness"
+    ],
+    "samples": 303,
+    "correct": 284,
+    "incorrect": 19,
+    "coefficients": [
+      -0.654997084228739,
+      0.0,
+      -0.19243444863225181,
+      0.32220167311830056,
+      0.37685960276742514,
+      0.0,
+      -0.41474837248881863,
+      1.325153968294624,
+      -0.23786459983589192,
+      -0.009529118308533785
+    ],
+    "intercept": 1.0149084352209738
+  },
+  "layer_2": {
+    "layer_key": "layer_2",
+    "signals": [
+      "confidence",
+      "answer_similarity_previous",
+      "response_length_score",
+      "numeric_density",
+      "reasoning_structure_score",
+      "final_answer_presence",
+      "is_arithmetic",
+      "is_span",
+      "hedging_score",
+      "answer_conciseness"
+    ],
+    "samples": 19,
+    "correct": 11,
+    "incorrect": 8,
+    "coefficients": [
+      0.0,
+      -0.6678161589576675,
+      -0.04187989206243339,
+      -0.05001472392230457,
+      0.8941077697110794,
+      0.0,
+      -0.2979986045638059,
+      -0.09621951725141291,
+      0.25831265633548595,
+      0.45779730686504755
+    ],
+    "intercept": 0.06872396400515775
+  },
+  "layer_3": {
+    "layer_key": "layer_3",
+    "signals": [
+      "confidence",
+      "answer_similarity_previous",
+      "response_length_score",
+      "numeric_density",
+      "reasoning_structure_score",
+      "final_answer_presence",
+      "is_arithmetic",
+      "is_span",
+      "hedging_score",
+      "answer_conciseness"
+    ],
+    "samples": 8,
+    "correct": 3,
+    "incorrect": 5,
+    "coefficients": [
+      -0.6564230105485588,
+      -0.8343639588533018,
+      -0.14640717439145123,
+      -0.10345976071586672,
+      0.0,
+      0.0,
+      -0.2283808534306652,
+      -0.26364480334093415,
+      -0.4500881144769861,
+      0.26364480334093415
+    ],
+    "intercept": -0.24735265549571964
+  },
+  "layer_4": {
+    "layer_key": "layer_4",
+    "signals": [
+      "confidence",
+      "answer_similarity_previous",
+      "response_length_score",
+      "numeric_density",
+      "reasoning_structure_score",
+      "final_answer_presence",
+      "is_arithmetic",
+      "is_span",
+      "hedging_score",
+      "answer_conciseness"
+    ],
+    "samples": 5,
+    "correct": 1,
+    "incorrect": 4,
+    "coefficients": [
+      -0.5124283012586017,
+      -0.5124283012586016,
+      0.09347687272322124,
+      -0.22288634111924685,
+      -0.29139165173661224,
+      0.0,
+      -0.14946694949349268,
+      0.5124283012586016,
+      -0.15554787022786173,
+      0.0
+    ],
+    "intercept": -1.4956943383692431
+  }
+}

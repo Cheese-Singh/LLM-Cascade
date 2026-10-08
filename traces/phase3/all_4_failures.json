@@ -1,0 +1,85 @@
+[
+  {
+    "answer": 14.88,
+    "answer_type": "arithmetic",
+    "scale": "percent"
+  },
+  {
+    "answer": "1",
+    "answer_type": "count",
+    "scale": ""
+  },
+  {
+    "answer": [
+      "20,687",
+      "8,107"
+    ],
+    "answer_type": "multi-span",
+    "scale": ""
+  },
+  {
+    "answer": "5",
+    "answer_type": "count",
+    "scale": ""
+  },
+  {
+    "answer": -512,
+    "answer_type": "arithmetic",
+    "scale": "thousand"
+  },
+  {
+    "answer": 6994.5,
+    "answer_type": "arithmetic",
+    "scale": "thousand"
+  },
+  {
+    "answer": "1",
+    "answer_type": "count",
+    "scale": ""
+  },
+  {
+    "answer": -14411,
+    "answer_type": "arithmetic",
+    "scale": "thousand"
+  },
+  {
+    "answer": -4022,
+    "answer_type": "arithmetic",
+    "scale": "thousand"
+  },
+  {
+    "answer": 0.48,
+    "answer_type": "arithmetic",
+    "scale": ""
+  },
+  {
+    "answer": -249.9,
+    "answer_type": "arithmetic",
+    "scale": "million"
+  },
+  {
+    "answer": "1",
+    "answer_type": "count",
+    "scale": ""
+  },
+  {
+    "answer": -10726,
+    "answer_type": "arithmetic",
+    "scale": "million"
+  },
+  {
+    "answer": 50.69,
+    "answer_type": "arithmetic",
+    "scale": "percent"
+  },
+  {
+    "answer": 950,
+    "answer_type": "arithmetic",
+    "scale": "thousand"
+  },
+  {
+    "answer": "2",
+    "answer_type": "count",
+    "scale": ""
+  }
+]

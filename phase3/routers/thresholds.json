@@ -1,0 +1,26 @@
+{
+  "layer_1": {
+    "threshold": 0.7764566310429772,
+    "false_stop_rate": 0.0,
+    "stop_rate": 0.48,
+    "validation_samples": 25.0
+  },
+  "layer_2": {
+    "threshold": 0.5875230773384669,
+    "false_stop_rate": 0.0,
+    "stop_rate": 0.08,
+    "validation_samples": 25.0
+  },
+  "layer_3": {
+    "threshold": 1.0,
+    "false_stop_rate": 0.0,
+    "stop_rate": 0.0,
+    "validation_samples": 25.0
+  },
+  "layer_4": {
+    "threshold": 0.2546472369941504,
+    "false_stop_rate": 0.0,
+    "stop_rate": 0.32,
+    "validation_samples": 25.0
+  }
+}

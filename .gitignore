@@ -22,3 +22,22 @@ GEMINI_API_KEY*
 
 # Scratch / local-only test artifacts (not part of the published benchmark)
 scratch_*.json
+
+# Phase 3 raw downloaded datasets & provisional models
+phase3/data/
+phase3/models/
+
+# Historical uncommitted experiments and traces from Phase 1 & 2
+results/experiment_*
+results/records_*
+results/summary_*
+results/phase1_100/
+results/phase1_100_gated/
+traces/benchmark_audit.json
+traces/decode_nested_escapes*
+traces/phase2_analysis.json
+traces/phase2_finance_contextual_summary.jsonl
+traces/phase2_math_analysis.json
+traces/phase2_math_contextual.jsonl
+traces/phase2_math_inspection/
+traces/phase2_pilot_15*
