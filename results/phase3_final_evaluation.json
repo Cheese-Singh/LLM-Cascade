@@ -2,23 +2,23 @@
   "dataset": "TAT-QA",
   "records": 50,
   "final_accuracy": 0.96,
-  "mean_router_tokens": 2497.74,
-  "median_router_tokens": 1505.5,
-  "mean_router_latency_ms": 11491.18472829694,
-  "median_router_latency_ms": 4416.935707995435,
+  "mean_router_tokens": 1539.16,
+  "median_router_tokens": 1303.5,
+  "mean_router_latency_ms": 3908.4877583384514,
+  "median_router_latency_ms": 3295.493062483729,
   "mean_oracle_tokens": 1006.6122448979592,
   "median_oracle_tokens": 888.0,
   "mean_oracle_latency_ms": 3288.450840998997,
   "median_oracle_latency_ms": 2641.0618749796413,
   "oracle_resolved_rate": 0.98,
-  "oracle_agreement_rate": 0.4897959183673469,
+  "oracle_agreement_rate": 0.5102040816326531,
   "false_stop_rate": 0.02040816326530612,
-  "unnecessary_escalation_rate": 0.4897959183673469,
+  "unnecessary_escalation_rate": 0.46938775510204084,
   "stop_distribution": {
     "L1": 25,
-    "L2": 5,
+    "L2": 24,
     "L3": 0,
-    "L4": 20
+    "L4": 1
   },
   "answer_type_metrics": {
     "multi-span": {
@@ -40,27 +40,27 @@
   },
   "router_thresholds": {
     "layer_1": {
-      "threshold": 0.7764566310429772,
+      "threshold": 0.8329640771149507,
       "false_stop_rate": 0.0,
       "stop_rate": 0.48,
       "validation_samples": 25.0
     },
     "layer_2": {
-      "threshold": 0.5875230773384669,
-      "false_stop_rate": 0.0,
-      "stop_rate": 0.08,
+      "threshold": 0.14860935860661287,
+      "false_stop_rate": 0.043478260869565216,
+      "stop_rate": 0.92,
       "validation_samples": 25.0
     },
     "layer_3": {
-      "threshold": 1.0,
+      "threshold": 0.5832331507545747,
       "false_stop_rate": 0.0,
-      "stop_rate": 0.0,
+      "stop_rate": 0.44,
       "validation_samples": 25.0
     },
     "layer_4": {
-      "threshold": 0.2546472369941504,
-      "false_stop_rate": 0.0,
-      "stop_rate": 0.32,
+      "threshold": 0.15628642343654403,
+      "false_stop_rate": 0.043478260869565216,
+      "stop_rate": 0.92,
       "validation_samples": 25.0
     }
   },
@@ -112,8 +112,8 @@
       "L2": 3
     }
   },
-  "token_savings_pct_vs_l4": -103.95708126469816,
-  "latency_savings_pct_vs_l4": 29.43993701914368,
+  "token_savings_pct_vs_l4": -25.68264959498301,
+  "latency_savings_pct_vs_l4": 76.00046044781148,
   "test_trace": "traces/phase3/phase3_tatqa_test_counterfactual.jsonl",
   "router_directory": "phase3/routers"
 }

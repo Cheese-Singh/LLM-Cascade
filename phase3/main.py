@@ -212,6 +212,17 @@ def train_command(
         train_path
     )
 
+    cf_companion = (
+        train_path.parent
+        / (train_path.stem + "_counterfactual.jsonl")
+    )
+    if (
+        cf_companion.exists()
+        and cf_companion.resolve() != train_path.resolve()
+    ):
+        print(f"Merging counterfactual training trace: {cf_companion.name}")
+        train_records.extend(load_records(cf_companion))
+
     validation_records = load_records(
         validation_path
     )

@@ -452,7 +452,7 @@ Phase III transitions beyond oracle verification to address the core Minimum Suf
 The benchmark evaluated is **TAT-QA**, a complex financial question-answering dataset combining unstructured financial statements and structured tables.
 
 ### Key Innovations:
-1. **Deterministic Dataset Pipeline (`phase3/dataset.py`):** Partitioned into `train` (303 records), `validation` (25 counterfactual records), and `test` (50 counterfactual records) with document-level separation to eliminate leakage and ensure 100% ground-truth label availability.
+1. **Deterministic Dataset Pipeline (`phase3/dataset.py`):** Partitioned into `train` (403 records total, including 100 fully counterfactual 4-layer records), `validation` (25 counterfactual records), and `test` (50 counterfactual records) with document-level separation to eliminate leakage and ensure 100% ground-truth label availability.
 2. **Domain-Specific Financial Evaluator (`phase3/tatqa_verifier.py`):** Handles arithmetic derivations, scale multipliers (thousands/millions/billions), percentages vs. decimals, financial negative formats like `(512)`, year queries, and fast-path span verification with Ollama semantic fallback.
 3. **Sequential Context Propagation (`phase3/collect.py`):** Higher layers receive the problem, table, and previous layer's answer to repair or confirm solutions rather than restarting blind.
 4. **Domain-Enriched Feature Extraction (`phase3/signals.py`):**
@@ -463,7 +463,7 @@ The benchmark evaluated is **TAT-QA**, a complex financial question-answering da
    - `hedging_score`: verbal uncertainty indicators (*"assuming"*, *"approximately"*, *"unclear"*, *"uncertain"*)
    - `answer_conciseness`: penalizes rambling, verbose answers
    - `numeric_density` & `reasoning_structure_score`: density of digits and reasoning keywords
-5. **Calibrated Logistic-Regression Routers (`phase3/router.py`):** Trained per layer with threshold optimization designed to **maximize early stop rate** subject to a strict **$\le 5\%$ False Stop Rate constraint**.
+5. **Calibrated Logistic-Regression Routers (`phase3/router.py`):** Trained per layer on counterfactual traces with threshold optimization designed to **maximize early stop rate** subject to a strict **$\le 5\%$ False Stop Rate constraint**.
 
 ---
 
@@ -473,15 +473,17 @@ The benchmark evaluated is **TAT-QA**, a complex financial question-answering da
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Always-L1** | 94.00% | 931.8 | 2.94s | +81.95% | — | — |
 | **Fixed Cascade** ($\text{conf} \ge 0.95$) | 94.00% | 992.3 | 3.00s | +81.58% | 4.08% | 2.04% |
-| **Learned Cascade (Router)** | **96.00%** | 2,497.7 | **11.49s** | **+29.44%** | **2.04%** | 48.98% |
+| **Learned Cascade (Router)** | **96.00%** | **1,539.2** | **3.91s** | **+76.00%** | **2.04%** | 46.94% |
 | **Always-L4** | 98.00% | 1,224.6 | 16.29s | 0.00% | — | — |
 | **Oracle Cascade** | 98.00% | 1,006.6 | 3.29s | +79.80% | 0.00% | 0.00% |
 
 #### Key Insights:
 - **Accuracy Improvement:** The Learned Cascade achieved **96.00% accuracy**, beating both Always-L1 (94.0%) and the Fixed Confidence Cascade (94.0%) by detecting when L1 was untrustworthy and escalating to higher models that fixed the mistakes.
 - **Safety Guarantee:** The False Stop Rate was **2.04%**, well within the $\le 5.0\%$ safety budget.
-- **Latency Reduction:** Compared to sending every query to the heavyweight frontier model (Always-L4 at 16.29s), the learned cascade cut latency down to **11.49s** (**29.44% savings**).
-- **Verbalized Confidence Inversion:** Raw model confidence was negatively correlated with correctness ($-0.655$) due to severe overconfidence on incorrect answers. In contrast, `is_span` ($+1.325$), `reasoning_structure_score` ($+0.377$), and `hedging_score` ($-0.238$) provided reliable predictive signals.
+- **76% Latency Reduction vs Always-L4:** By training Layer 2 on true counterfactual data, the L2 router learned a positive weight for agreement and stopped 24 queries safely at Layer 2. Mean cascade latency dropped to **3.91s** (a **+76.00% latency reduction vs Always-L4** at 16.29s, compared to 29.44% previously).
+- **Token Efficiency:** Mean token consumption plummeted from 2,497.7 to **1,539.2 tokens** (a 38.4% token savings).
+- **Avoidance of Frontier Model:** Out of 50 test queries, **only 1 single query reached Layer 4** (stop distribution: `L1: 25, L2: 24, L3: 0, L4: 1`), radically reducing reliance on the expensive frontier model.
+- **Verbalized Confidence Inversion:** Raw model confidence was negatively correlated with correctness ($-0.731$) due to severe overconfidence on incorrect answers. In contrast, `is_span` ($+1.394$) and `reasoning_structure_score` ($+0.254$) provided robust predictive signals.
 
 ---
 
@@ -525,6 +527,7 @@ LLM-Cascade/
 │   ├── phase2_finance_analysis.json
 │   └── phase3/
 │       ├── phase3_tatqa_train.jsonl
+│       ├── phase3_tatqa_train_counterfactual.jsonl
 │       ├── phase3_tatqa_validation_counterfactual.jsonl
 │       ├── phase3_tatqa_test_counterfactual.jsonl
 │       └── all_4_failures.json

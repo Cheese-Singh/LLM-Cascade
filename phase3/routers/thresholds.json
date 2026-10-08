@@ -1,26 +1,26 @@
 {
   "layer_1": {
-    "threshold": 0.7764566310429772,
+    "threshold": 0.8329640771149507,
     "false_stop_rate": 0.0,
     "stop_rate": 0.48,
     "validation_samples": 25.0
   },
   "layer_2": {
-    "threshold": 0.5875230773384669,
-    "false_stop_rate": 0.0,
-    "stop_rate": 0.08,
+    "threshold": 0.14860935860661287,
+    "false_stop_rate": 0.043478260869565216,
+    "stop_rate": 0.92,
     "validation_samples": 25.0
   },
   "layer_3": {
-    "threshold": 1.0,
+    "threshold": 0.5832331507545747,
     "false_stop_rate": 0.0,
-    "stop_rate": 0.0,
+    "stop_rate": 0.44,
     "validation_samples": 25.0
   },
   "layer_4": {
-    "threshold": 0.2546472369941504,
-    "false_stop_rate": 0.0,
-    "stop_rate": 0.32,
+    "threshold": 0.15628642343654403,
+    "false_stop_rate": 0.043478260869565216,
+    "stop_rate": 0.92,
     "validation_samples": 25.0
   }
 }
