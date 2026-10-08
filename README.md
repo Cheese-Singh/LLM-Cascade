@@ -64,7 +64,7 @@ The experiments use four model layers:
 | L3    | `nemotron-3-super:cloud` |
 | L4    | `nemotron-3-ultra:cloud` |
 
-Phase II generation settings:
+Generation settings:
 
 ```text
 Temperature: 0.2
@@ -443,10 +443,66 @@ The raw traces are preserved separately from canonical final datasets where appl
 
 ---
 
+# Phase III — Minimum Sufficient Inference with Learned Routers
+
+**Status: Complete and evaluated**
+
+Phase III transitions beyond oracle verification to address the core Minimum Sufficient Inference challenge: **predicting when to stop or escalate dynamically using only response signals, task context, and inter-layer agreement, without knowing ground truth or consulting stronger models.**
+
+The benchmark evaluated is **TAT-QA**, a complex financial question-answering dataset combining unstructured financial statements and structured tables.
+
+### Key Innovations:
+1. **Deterministic Dataset Pipeline (`phase3/dataset.py`):** Partitioned into `train` (303 records), `validation` (25 counterfactual records), and `test` (50 counterfactual records) with document-level separation to eliminate leakage and ensure 100% ground-truth label availability.
+2. **Domain-Specific Financial Evaluator (`phase3/tatqa_verifier.py`):** Handles arithmetic derivations, scale multipliers (thousands/millions/billions), percentages vs. decimals, financial negative formats like `(512)`, year queries, and fast-path span verification with Ollama semantic fallback.
+3. **Sequential Context Propagation (`phase3/collect.py`):** Higher layers receive the problem, table, and previous layer's answer to repair or confirm solutions rather than restarting blind.
+4. **Domain-Enriched Feature Extraction (`phase3/signals.py`):**
+   - `confidence`: verbalized self-reported confidence
+   - `answer_similarity_previous`: lexical & semantic agreement with previous layer
+   - `is_arithmetic`: flags arithmetic problems (higher baseline failure rate)
+   - `is_span`: flags span extraction (higher baseline success rate)
+   - `hedging_score`: verbal uncertainty indicators (*"assuming"*, *"approximately"*, *"unclear"*, *"uncertain"*)
+   - `answer_conciseness`: penalizes rambling, verbose answers
+   - `numeric_density` & `reasoning_structure_score`: density of digits and reasoning keywords
+5. **Calibrated Logistic-Regression Routers (`phase3/router.py`):** Trained per layer with threshold optimization designed to **maximize early stop rate** subject to a strict **$\le 5\%$ False Stop Rate constraint**.
+
+---
+
+### Phase III Benchmark Results (Held-Out Test Set: $N=50$)
+
+| Method | Accuracy | Mean Tokens | Mean Latency | Latency Savings vs L4 | False Stop Rate | Unnecessary Escalation |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Always-L1** | 94.00% | 931.8 | 2.94s | +81.95% | — | — |
+| **Fixed Cascade** ($\text{conf} \ge 0.95$) | 94.00% | 992.3 | 3.00s | +81.58% | 4.08% | 2.04% |
+| **Learned Cascade (Router)** | **96.00%** | 2,497.7 | **11.49s** | **+29.44%** | **2.04%** | 48.98% |
+| **Always-L4** | 98.00% | 1,224.6 | 16.29s | 0.00% | — | — |
+| **Oracle Cascade** | 98.00% | 1,006.6 | 3.29s | +79.80% | 0.00% | 0.00% |
+
+#### Key Insights:
+- **Accuracy Improvement:** The Learned Cascade achieved **96.00% accuracy**, beating both Always-L1 (94.0%) and the Fixed Confidence Cascade (94.0%) by detecting when L1 was untrustworthy and escalating to higher models that fixed the mistakes.
+- **Safety Guarantee:** The False Stop Rate was **2.04%**, well within the $\le 5.0\%$ safety budget.
+- **Latency Reduction:** Compared to sending every query to the heavyweight frontier model (Always-L4 at 16.29s), the learned cascade cut latency down to **11.49s** (**29.44% savings**).
+- **Verbalized Confidence Inversion:** Raw model confidence was negatively correlated with correctness ($-0.655$) due to severe overconfidence on incorrect answers. In contrast, `is_span` ($+1.325$), `reasoning_structure_score` ($+0.377$), and `hedging_score` ($-0.238$) provided reliable predictive signals.
+
+---
+
 # Repository Structure
 
 ```text
 LLM-Cascade/
+│
+├── phase3/                       # Phase III Architecture & Pipeline
+│   ├── config.py                 # Phase III paths, models, hyperparameters
+│   ├── dataset.py                # TAT-QA dataset loader, split partitioning, stratification
+│   ├── signals.py                # Signal & feature extraction for router models
+│   ├── tatqa_verifier.py         # Financial correctness evaluator & edge case handler
+│   ├── semantic_verifier.py      # Ollama-based semantic equivalence fallback
+│   ├── collect.py                # Adaptive & counterfactual trace collection
+│   ├── router.py                 # Logistic regression routers & threshold optimizer
+│   ├── evaluation.py             # Cascade simulation, baselines, & comparative metrics
+│   ├── analysis.py               # Failure inspection & distribution analysis
+│   ├── main.py                   # Unified CLI for Phase III (collect, train, test, analyze)
+│   ├── routers/                  # Trained router models (*.joblib) & thresholds.json
+│   └── data/tatqa/               # Cached TAT-QA datasets
 │
 ├── benchmarks/
 │   ├── code_100.json
@@ -456,7 +512,8 @@ LLM-Cascade/
 │
 ├── results/
 │   ├── phase1_100/
-│   └── phase1_100_gated/
+│   ├── phase1_100_gated/
+│   └── phase3_final_evaluation.json
 │
 ├── traces/
 │   ├── phase2_hard_15.jsonl
@@ -465,7 +522,12 @@ LLM-Cascade/
 │   ├── phase2_math_contextual_final.jsonl
 │   ├── phase2_math_analysis_final.json
 │   ├── phase2_finance_contextual.jsonl
-│   └── phase2_finance_analysis.json
+│   ├── phase2_finance_analysis.json
+│   └── phase3/
+│       ├── phase3_tatqa_train.jsonl
+│       ├── phase3_tatqa_validation_counterfactual.jsonl
+│       ├── phase3_tatqa_test_counterfactual.jsonl
+│       └── all_4_failures.json
 │
 ├── audit_benchmark.py
 ├── config.py
@@ -529,6 +591,46 @@ The Phase II collection runner supports inclusive ranges through:
 
 The output writer merges records by `problem_id`, with a newer record replacing an older record.
 
+## Phase III — Financial QA (TAT-QA)
+
+### 1. Collect Traces
+Collect counterfactual traces (all 4 layers evaluated on every problem) with live timers and incremental checkpointing:
+
+```bash
+# Collect validation set (25 problems)
+python -m phase3.main collect --split validation --subset-size 25 --counterfactual
+
+# Collect held-out test set (50 problems)
+python -m phase3.main collect --split test --subset-size 50 --counterfactual
+```
+
+### 2. Train Routers & Tune Thresholds
+Train the logistic-regression routers on training traces and optimize decision thresholds on the validation set under the $\le 5\%$ false-stop constraint:
+
+```bash
+python -m phase3.main train \
+  --train traces/phase3/phase3_tatqa_train.jsonl \
+  --validation traces/phase3/phase3_tatqa_validation_counterfactual.jsonl \
+  --output phase3/routers
+```
+
+### 3. Evaluate the Cascade Against Baselines
+Simulate the learned cascade on the held-out test traces and benchmark against Always-L1, Always-L4, Fixed Cascade, and Oracle:
+
+```bash
+python -m phase3.main test \
+  --test traces/phase3/phase3_tatqa_test_counterfactual.jsonl \
+  --routers phase3/routers \
+  --output results/phase3_final_evaluation.json
+```
+
+### 4. Inspect Failures
+Analyze remaining errors and verifier outputs:
+
+```bash
+python -m phase3.main analyze --failures
+```
+
 ---
 
 # Reliability Notes
@@ -577,28 +679,6 @@ Further experiments are required before generalization.
 ---
 
 # Future Work
-
-## Phase III — Smarter Routing
-
-**Status: Planned**
-
-Replace oracle escalation with a learned or heuristic router that predicts whether additional inference is necessary.
-
-Potential signals include:
-
-* model confidence
-* disagreement
-* response structure
-* uncertainty estimates
-* verifier-independent signals
-* semantic difficulty
-* previous-layer behavior
-
-The key question is:
-
-> Can the system predict when another layer is worth the additional inference cost without directly observing the ground-truth verification result?
-
----
 
 ## Phase IV — Generalization
 
@@ -652,7 +732,7 @@ Phase I establishes the execution-gated setting.
 
 Phase II measures minimum sufficient inference across hard code, mathematics, and finance.
 
-Phase III will investigate whether the stopping decision can be predicted without oracle access.
+Phase III investigates predicting stopping decisions without oracle access via learned routers.
 
 Phase IV will test whether the resulting routing principles generalize.
 
@@ -663,10 +743,10 @@ Phase IV will test whether the resulting routing principles generalize.
 ```text
 Phase I    Execution-gated code cascade       COMPLETE
 Phase II   Contextual counterfactual analysis COMPLETE
-Phase III  Smarter routing                    PLANNED
+Phase III  Smarter routing (learned routers)   COMPLETE
 Phase IV   Generalization                     PLANNED
 ```
 
 **Phase I and Phase II are frozen.**
 
-Future experimentation should build on the frozen artifacts rather than modify the completed experimental record.
+**Phase III is complete and fully reproducible with frozen evaluation traces.**
