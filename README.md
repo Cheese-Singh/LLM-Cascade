@@ -445,14 +445,14 @@ The raw traces are preserved separately from canonical final datasets where appl
 
 # Phase III — Minimum Sufficient Inference with Learned Routers
 
-**Status: Complete and evaluated**
+**Status: Verifier correction evaluated; false-stop reduction remains open**
 
 Phase III transitions beyond oracle verification to address the core Minimum Sufficient Inference challenge: **predicting when to stop or escalate dynamically using only response signals, task context, and inter-layer agreement, without knowing ground truth or consulting stronger models.**
 
 The benchmark evaluated is **TAT-QA**, a complex financial question-answering dataset combining unstructured financial statements and structured tables.
 
 ### Key Innovations:
-1. **Deterministic Dataset Pipeline (`phase3/dataset.py`):** Partitioned into `train` (403 records total, including 100 fully counterfactual 4-layer records), `validation` (25 counterfactual records), and `test` (50 counterfactual records) with document-level separation to eliminate leakage and ensure 100% ground-truth label availability.
+1. **Deterministic Dataset Pipeline (`phase3/dataset.py`):** Uses document-separated train, validation, and test partitions. The original traces contain 403 rows across 300 distinct training questions because their 100-row counterfactual companion overlaps the original training IDs. The optimization adds 100 unique questions with non-empty gold answers and nonblank responses at all four layers.
 2. **Domain-Specific Financial Evaluator (`phase3/tatqa_verifier.py`):** Handles arithmetic derivations, scale multipliers (thousands/millions/billions), percentages vs. decimals, financial negative formats like `(512)`, year queries, and fast-path span verification with Ollama semantic fallback.
 3. **Sequential Context Propagation (`phase3/collect.py`):** Higher layers receive the problem, table, and previous layer's answer to repair or confirm solutions rather than restarting blind.
 4. **Domain-Enriched Feature Extraction (`phase3/signals.py`):**
@@ -460,10 +460,14 @@ The benchmark evaluated is **TAT-QA**, a complex financial question-answering da
    - `answer_similarity_previous`: lexical & semantic agreement with previous layer
    - `is_arithmetic`: flags arithmetic problems (higher baseline failure rate)
    - `is_span`: flags span extraction (higher baseline success rate)
+   - `is_count`: separately flags count questions
+   - `final_answer_presence`: detects an explicit answer marker in the response
    - `hedging_score`: verbal uncertainty indicators (*"assuming"*, *"approximately"*, *"unclear"*, *"uncertain"*)
    - `answer_conciseness`: penalizes rambling, verbose answers
    - `numeric_density` & `reasoning_structure_score`: density of digits and reasoning keywords
-5. **Calibrated Logistic-Regression Routers (`phase3/router.py`):** Trained per layer on counterfactual traces with threshold optimization designed to **maximize early stop rate** subject to a strict **$\le 5\%$ False Stop Rate constraint**.
+5. **Logistic-Regression Routers (`phase3/router.py`):** Trained per layer on non-empty, nonblank examples; feature subsets and threshold combinations are selected on validation data. Thresholds minimize cumulative token cost subject to the **$\le 5\%$ false-stop constraint** and at least the validation-set L4 accuracy. The 25-question validation split is small; held-out test outcomes are reported separately and are not used for tuning.
+
+The optimization adds 100 verified training questions, fixes the missing `final_answer_presence` signal, adds a separate `is_count` feature, and audits per-layer feature subsets and regularization. A verifier audit found that accounting-negative values such as `$(1,161.33)` were parsed as positive, and numeric extraction could select a year from an answer explanation instead of the result. After correcting numeric labels in memory, the existing optimized router evaluates at **96% accuracy** and **1,137.2 mean tokens**, compared with **94%** for Always-L1 and **1,224.6** for Always-L4. This is a corrected evaluation of existing router artifacts, not a retrained router. The **4% false-stop rate (2 of 50)** remains a material issue; do not consider routing work complete. Further routing changes must be selected on validation data, and DistilBERT remains deferred.
 
 ---
 
@@ -472,18 +476,34 @@ The benchmark evaluated is **TAT-QA**, a complex financial question-answering da
 | Method | Accuracy | Mean Tokens | Mean Latency | Latency Savings vs L4 | False Stop Rate | Unnecessary Escalation |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Always-L1** | 94.00% | 931.8 | 2.94s | +81.95% | — | — |
-| **Fixed Cascade** ($\text{conf} \ge 0.95$) | 94.00% | 992.3 | 3.00s | +81.58% | 4.08% | 2.04% |
-| **Learned Cascade (Router)** | **96.00%** | **1,539.2** | **3.91s** | **+76.00%** | **2.04%** | 46.94% |
-| **Always-L4** | 98.00% | 1,224.6 | 16.29s | 0.00% | — | — |
-| **Oracle Cascade** | 98.00% | 1,006.6 | 3.29s | +79.80% | 0.00% | 0.00% |
+| **Fixed Cascade** ($\text{conf} \ge 0.95$) | 94.00% | 992.3 | 3.00s | +81.58% | 6.00% | 4.00% |
+| Learned Cascade (original baseline; pre-verifier correction) | 96.00% | 1,539.2 | 3.91s | +76.00% | 2.04% | 46.94% |
+| **Learned Cascade (optimized LogReg; corrected numeric labels)** | **96.00%** | **1,137.2** | **3.25s** | **+80.03%** | **4.00%** | **18.37%** |
+| **Always-L4 (corrected numeric labels)** | 100.00% | 1,224.6 | 16.29s | 0.00% | — | — |
+| **Oracle Cascade (corrected numeric labels)** | 100.00% | 1,039.1 | 3.33s | +79.52% | 0.00% | 0.00% |
 
 #### Key Insights:
-- **Accuracy Improvement:** The Learned Cascade achieved **96.00% accuracy**, beating both Always-L1 (94.0%) and the Fixed Confidence Cascade (94.0%) by detecting when L1 was untrustworthy and escalating to higher models that fixed the mistakes.
-- **Safety Guarantee:** The False Stop Rate was **2.04%**, well within the $\le 5.0\%$ safety budget.
-- **76% Latency Reduction vs Always-L4:** By training Layer 2 on true counterfactual data, the L2 router learned a positive weight for agreement and stopped 24 queries safely at Layer 2. Mean cascade latency dropped to **3.91s** (a **+76.00% latency reduction vs Always-L4** at 16.29s, compared to 29.44% previously).
-- **Token Efficiency:** Mean token consumption plummeted from 2,497.7 to **1,539.2 tokens** (a 38.4% token savings).
-- **Avoidance of Frontier Model:** Out of 50 test queries, **only 1 single query reached Layer 4** (stop distribution: `L1: 25, L2: 24, L3: 0, L4: 1`), radically reducing reliance on the expensive frontier model.
-- **Verbalized Confidence Inversion:** Raw model confidence was negatively correlated with correctness ($-0.731$) due to severe overconfidence on incorrect answers. In contrast, `is_span` ($+1.394$) and `reasoning_structure_score` ($+0.254$) provided robust predictive signals.
+- **Token-cost improvement:** The optimized LogReg router uses **1,137.2 mean tokens**, 7.14% below Always-L4's 1,224.6, compared with 1,539.2 tokens for the original learned baseline.
+- **Fewer unnecessary escalations:** The optimized router's held-out unnecessary-escalation rate is **18.37%**, down from 46.94%. Its stop distribution is `L1: 40, L2: 10, L3: 0, L4: 0`.
+- **Corrected numeric labels:** Rechecking the arithmetic records makes the optimized router **96% accurate** (48/50), above Always-L1's 94%. Always-L4 is **100% accurate** (50/50) after the corrected accounting-negative answer is recognized.
+- **False stops remain:** The optimized router still has **2 false stops in 50 questions (4%)**. Both are genuine L1 mistakes that the router stopped on; this remains the main routing issue.
+- **Token goal met:** Corrected evaluation retains **1,137.2 mean tokens** for the learned router versus **1,224.6** for Always-L4 (7.14% lower). The router artifacts and thresholds were not retrained or tuned on test results.
+- **Label correction:** For the operating-income example, L1's `$(1,159)` is wrong; L2-L4's `$(1,161.33)` matches the gold derivation. The verifier previously selected the year 2017 as the candidate and treated accounting parentheses as positive, incorrectly marking every layer wrong and the item unresolved.
+- **Validation limits:** The saved thresholds were originally selected on only 25 validation examples. A temporary retraining experiment with corrected numeric training labels preserved 96% test accuracy but raised mean tokens above Always-L4; those temporary artifacts were discarded. Threshold and model work therefore remains open, and test records were used only for final diagnosis/evaluation.
+- **Feature audit is tentative:** The audit selects per-layer subsets and regularization using only 25 validation examples. The results are noisy and need more validation data before treating feature rankings as robust.
+
+#### Additional Held-Out Results
+
+| Answer type | Accuracy | Questions |
+| :--- | :---: | ---: |
+| Multi-span | 83.33% | 12 |
+| Arithmetic | 100.00% | 13 |
+| Span | 100.00% | 12 |
+| Count | 100.00% | 13 |
+
+The optimized router's median usage was **928.5 tokens** and median latency was **2.78s**. For comparison, Always-L4 used a median **1,139.5 tokens** and took **13.42s**; the corrected oracle cascade used **1,039.1 mean tokens**. Oracle agreement for the learned router was **78.00%**. The oracle cascade resolves all 50 questions (100%) after the numeric-label correction.
+
+The corrected evaluation summary, including its numeric-label recheck scope and the two remaining false-stop examples, is in [`phase3/data/logreg_corrected_test_evaluation.json`](phase3/data/logreg_corrected_test_evaluation.json). The prior, pre-correction run is preserved in [`phase3/data/logreg_optimized_test_evaluation.json`](phase3/data/logreg_optimized_test_evaluation.json). The validation-only feature and hyperparameter audit is in [`phase3/data/logreg_feature_audit.json`](phase3/data/logreg_feature_audit.json).
 
 ---
 
@@ -605,17 +625,26 @@ python -m phase3.main collect --split validation --subset-size 25 --counterfactu
 
 # Collect held-out test set (50 problems)
 python -m phase3.main collect --split test --subset-size 50 --counterfactual
+
+# Select and collect 100 new training questions after excluding existing IDs
+# and checking for non-empty gold answers; outputs are under phase3/data/
+python -m phase3.main collect --split train --counterfactual \
+  --additional-training-count 100
 ```
 
-### 2. Train Routers & Tune Thresholds
-Train the logistic-regression routers on training traces and optimize decision thresholds on the validation set under the $\le 5\%$ false-stop constraint:
+### 2. Audit and Train Logistic-Regression Routers
+Run validation feature ablations, then train on existing traces plus the additional counterfactual trace when present. Threshold combinations minimize validation cumulative tokens under the false-stop and L4-accuracy constraints:
 
 ```bash
+python -m phase3.main audit
+
 python -m phase3.main train \
   --train traces/phase3/phase3_tatqa_train.jsonl \
   --validation traces/phase3/phase3_tatqa_validation_counterfactual.jsonl \
   --output phase3/routers
 ```
+
+The held-out test set must not be used to select features, model settings, or thresholds. Do not commit or publish generated traces, router artifacts, or results without explicit approval.
 
 ### 3. Evaluate the Cascade Against Baselines
 Simulate the learned cascade on the held-out test traces and benchmark against Always-L1, Always-L4, Fixed Cascade, and Oracle:
@@ -746,10 +775,10 @@ Phase IV will test whether the resulting routing principles generalize.
 ```text
 Phase I    Execution-gated code cascade       COMPLETE
 Phase II   Contextual counterfactual analysis COMPLETE
-Phase III  Smarter routing (learned routers)   COMPLETE
+Phase III  Smarter routing (learned routers)   IN PROGRESS
 Phase IV   Generalization                     PLANNED
 ```
 
 **Phase I and Phase II are frozen.**
 
-**Phase III is complete and fully reproducible with frozen evaluation traces.**
+**Phase III's initial evaluation is reproducible from frozen traces. LogReg optimization has reduced token use below Always-L4, but the agreed accuracy target remains unmet.**

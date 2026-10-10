@@ -189,6 +189,12 @@ def final_answer_presence(
         "answer:",
         "answer =",
     )
+    return float(
+        any(
+            marker in lower
+            for marker in markers
+        )
+    )
 
 HEDGING_INDICATORS = (
     "approximately",
@@ -238,11 +244,12 @@ def answer_conciseness(
 
 def answer_type_signals(
     problem: dict[str, Any],
-) -> tuple[float, float]:
-    atype = str(problem.get("answer_type", "")).lower()
+) -> tuple[float, float, float]:
+    atype = str(problem.get("answer_type", "")).strip().lower()
     is_arithmetic = 1.0 if atype in ("arithmetic", "numeric", "float") else 0.0
     is_span = 1.0 if atype in ("span", "multi-span", "multispan", "text") else 0.0
-    return is_arithmetic, is_span
+    is_count = 1.0 if atype == "count" else 0.0
+    return is_arithmetic, is_span, is_count
 
 
 def extract_signals(
@@ -259,7 +266,7 @@ def extract_signals(
         previous_response,
     )
 
-    is_arithmetic, is_span = answer_type_signals(
+    is_arithmetic, is_span, is_count = answer_type_signals(
         problem
     )
 
@@ -280,6 +287,7 @@ def extract_signals(
         ),
         "is_arithmetic": is_arithmetic,
         "is_span": is_span,
+        "is_count": is_count,
         "hedging_score": hedging_score(
             response
         ),
@@ -299,6 +307,7 @@ def signal_names() -> list[str]:
         "final_answer_presence",
         "is_arithmetic",
         "is_span",
+        "is_count",
         "hedging_score",
         "answer_conciseness",
     ]

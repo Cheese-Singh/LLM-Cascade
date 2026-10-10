@@ -1,0 +1,958 @@
+{
+  "layer_1": {
+    "all_features": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "selected_features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score"
+      ],
+      "selected_variant": "without_answer_conciseness",
+      "selected_feature_validation_brier_score": 0.10687886766978277,
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10687886766978277
+    },
+    "hyperparameter_search": {
+      "feature_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "regularization_c": 10.0,
+      "class_weight": null,
+      "validation_brier_score": 0.10687886766978277,
+      "validation_samples": 25
+    },
+    "without_confidence": {
+      "features": [
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10791405925771805
+    },
+    "without_answer_similarity_previous": {
+      "features": [
+        "confidence",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10780639760573316
+    },
+    "without_response_length_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10857736368807347
+    },
+    "without_numeric_density": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10936516819151244
+    },
+    "without_reasoning_structure_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.84,
+      "brier_score": 0.11672169211021784
+    },
+    "without_final_answer_presence": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.1078063976057331
+    },
+    "without_is_arithmetic": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10789617950210696
+    },
+    "without_is_span": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10794946794562905
+    },
+    "without_is_count": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10797030141861529
+    },
+    "without_hedging_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.84,
+      "brier_score": 0.12718762685820953
+    },
+    "without_answer_conciseness": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10687886766978277
+    }
+  },
+  "layer_2": {
+    "all_features": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "selected_features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "answer_conciseness"
+      ],
+      "selected_variant": "without_hedging_score",
+      "selected_feature_validation_brier_score": 0.031181887862631857,
+      "samples": 25,
+      "accuracy_at_half": 0.96,
+      "brier_score": 0.031181887862631857
+    },
+    "hyperparameter_search": {
+      "feature_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        10
+      ],
+      "regularization_c": 10.0,
+      "class_weight": null,
+      "validation_brier_score": 0.031181887862631857,
+      "validation_samples": 25
+    },
+    "without_confidence": {
+      "features": [
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.07144946913087084
+    },
+    "without_answer_similarity_previous": {
+      "features": [
+        "confidence",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.07080261097271397
+    },
+    "without_response_length_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.96,
+      "brier_score": 0.034178681631137346
+    },
+    "without_numeric_density": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09686450104844041
+    },
+    "without_reasoning_structure_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09970582886751059
+    },
+    "without_final_answer_presence": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.07375171428488729
+    },
+    "without_is_arithmetic": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.07750948358584746
+    },
+    "without_is_span": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.07531869633638291
+    },
+    "without_is_count": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.07414996820996231
+    },
+    "without_hedging_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.96,
+      "brier_score": 0.031181887862631857
+    },
+    "without_answer_conciseness": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.06740293967293502
+    }
+  },
+  "layer_3": {
+    "all_features": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "selected_features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "answer_conciseness"
+      ],
+      "selected_variant": "without_hedging_score",
+      "selected_feature_validation_brier_score": 0.09142378531756576,
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09142378531756576
+    },
+    "hyperparameter_search": {
+      "feature_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        10
+      ],
+      "regularization_c": 10.0,
+      "class_weight": null,
+      "validation_brier_score": 0.09142378531756576,
+      "validation_samples": 25
+    },
+    "without_confidence": {
+      "features": [
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.0995462121382171
+    },
+    "without_answer_similarity_previous": {
+      "features": [
+        "confidence",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10204509481140267
+    },
+    "without_response_length_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.84,
+      "brier_score": 0.10235870778119961
+    },
+    "without_numeric_density": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.84,
+      "brier_score": 0.101752361320236
+    },
+    "without_reasoning_structure_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.10193977675474365
+    },
+    "without_final_answer_presence": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09980058174404456
+    },
+    "without_is_arithmetic": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09965330063991988
+    },
+    "without_is_span": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09954105324023974
+    },
+    "without_is_count": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09959315476215803
+    },
+    "without_hedging_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.09142378531756576
+    },
+    "without_answer_conciseness": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.88,
+      "brier_score": 0.0998881733913141
+    }
+  },
+  "layer_4": {
+    "all_features": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "selected_features": [
+        "confidence",
+        "answer_similarity_previous",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "selected_variant": "without_response_length_score",
+      "selected_feature_validation_brier_score": 0.05557296116112649,
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.05557296116112649
+    },
+    "hyperparameter_search": {
+      "feature_indices": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "regularization_c": 10.0,
+      "class_weight": null,
+      "validation_brier_score": 0.05557296116112649,
+      "validation_samples": 25
+    },
+    "without_confidence": {
+      "features": [
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.09135878452256838
+    },
+    "without_answer_similarity_previous": {
+      "features": [
+        "confidence",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.09104505775323161
+    },
+    "without_response_length_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.05557296116112649
+    },
+    "without_numeric_density": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.84,
+      "brier_score": 0.09748539435125216
+    },
+    "without_reasoning_structure_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.08442104920950527
+    },
+    "without_final_answer_presence": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.08849788622859059
+    },
+    "without_is_arithmetic": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_span",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.08797655847801883
+    },
+    "without_is_span": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_count",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.08647406772387044
+    },
+    "without_is_count": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "hedging_score",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.08720342911276768
+    },
+    "without_hedging_score": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "answer_conciseness"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.0749615342911841
+    },
+    "without_answer_conciseness": {
+      "features": [
+        "confidence",
+        "answer_similarity_previous",
+        "response_length_score",
+        "numeric_density",
+        "reasoning_structure_score",
+        "final_answer_presence",
+        "is_arithmetic",
+        "is_span",
+        "is_count",
+        "hedging_score"
+      ],
+      "samples": 25,
+      "accuracy_at_half": 0.92,
+      "brier_score": 0.0884400358116812
+    }
+  }
+}

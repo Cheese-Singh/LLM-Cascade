@@ -1,0 +1,131 @@
+{
+  "dataset": "TAT-QA",
+  "records": 50,
+  "final_accuracy": 0.94,
+  "mean_router_tokens": 1137.18,
+  "median_router_tokens": 928.5,
+  "mean_router_latency_ms": 3251.483413358801,
+  "median_router_latency_ms": 2779.126917012036,
+  "mean_oracle_tokens": 1006.6122448979592,
+  "median_oracle_tokens": 888.0,
+  "mean_oracle_latency_ms": 3288.450840998997,
+  "median_oracle_latency_ms": 2641.0618749796413,
+  "oracle_resolved_rate": 0.98,
+  "oracle_agreement_rate": 0.7755102040816326,
+  "false_stop_rate": 0.04081632653061224,
+  "unnecessary_escalation_rate": 0.1836734693877551,
+  "stop_distribution": {
+    "L1": 40,
+    "L2": 10,
+    "L3": 0,
+    "L4": 0
+  },
+  "answer_type_metrics": {
+    "multi-span": {
+      "count": 12,
+      "accuracy": 0.8333333333333334
+    },
+    "arithmetic": {
+      "count": 13,
+      "accuracy": 0.9230769230769231
+    },
+    "span": {
+      "count": 12,
+      "accuracy": 1.0
+    },
+    "count": {
+      "count": 13,
+      "accuracy": 1.0
+    }
+  },
+  "router_thresholds": {
+    "layer_1": {
+      "threshold": 0.8927560132646335,
+      "false_stop_rate": 0.0,
+      "unnecessary_escalation_rate": 0.391304347826087,
+      "validation_accuracy": 0.92,
+      "mean_tokens": 1856.48,
+      "validation_samples": 25.0,
+      "accuracy_floor": 0.92
+    },
+    "layer_2": {
+      "threshold": 0.7514490690213093,
+      "false_stop_rate": 0.0,
+      "unnecessary_escalation_rate": 0.391304347826087,
+      "validation_accuracy": 0.92,
+      "mean_tokens": 1856.48,
+      "validation_samples": 25.0,
+      "accuracy_floor": 0.92
+    },
+    "layer_3": {
+      "threshold": 0.8907709785612106,
+      "false_stop_rate": 0.0,
+      "unnecessary_escalation_rate": 0.391304347826087,
+      "validation_accuracy": 0.92,
+      "mean_tokens": 1856.48,
+      "validation_samples": 25.0,
+      "accuracy_floor": 0.92
+    },
+    "layer_4": {
+      "threshold": 0.0,
+      "false_stop_rate": 0.0,
+      "unnecessary_escalation_rate": 0.391304347826087,
+      "validation_accuracy": 0.92,
+      "mean_tokens": 1856.48,
+      "validation_samples": 25.0,
+      "accuracy_floor": 0.92
+    }
+  },
+  "oracle": {
+    "records": 50,
+    "resolved": 49,
+    "unresolved": 1,
+    "resolved_rate": 0.98,
+    "accuracy": 0.98,
+    "mean_tokens": 1006.6122448979592,
+    "mean_latency_ms": 3288.450840998997,
+    "distribution": {
+      "L1": 47,
+      "L2": 1,
+      "L3": 1,
+      "L4": 0
+    }
+  },
+  "always_l1": {
+    "layer": 1,
+    "records": 50,
+    "accuracy": 0.94,
+    "mean_tokens": 931.8,
+    "median_tokens": 888.0,
+    "mean_latency_ms": 2939.891584998695,
+    "median_latency_ms": 2631.984478983213
+  },
+  "always_l4": {
+    "layer": 4,
+    "records": 50,
+    "accuracy": 0.98,
+    "mean_tokens": 1224.64,
+    "median_tokens": 1139.5,
+    "mean_latency_ms": 16285.678105778643,
+    "median_latency_ms": 13417.17502049869
+  },
+  "fixed_cascade": {
+    "confidence_threshold": 0.95,
+    "records": 50,
+    "accuracy": 0.94,
+    "mean_tokens": 992.28,
+    "median_tokens": 888.0,
+    "mean_latency_ms": 3003.016214998788,
+    "median_latency_ms": 2644.0678124927217,
+    "false_stop_rate": 0.04081632653061224,
+    "unnecessary_escalation_rate": 0.04081632653061224,
+    "stop_distribution": {
+      "L1": 47,
+      "L2": 3
+    }
+  },
+  "token_savings_pct_vs_l4": 7.141690619284037,
+  "latency_savings_pct_vs_l4": 80.0347066162073,
+  "test_trace": "/Users/ekamveersingh/Documents/GitHub/LLM-Cascade/traces/phase3/phase3_tatqa_test_counterfactual.jsonl",
+  "router_directory": "phase3/routers"
+}

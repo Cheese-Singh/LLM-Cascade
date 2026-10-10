@@ -310,6 +310,63 @@ def get_tatqa_split(
     )
 
 
+def has_nonempty_gold_answer(
+    record: dict[str, Any],
+) -> bool:
+    answer = record.get("answer")
+
+    if answer is None:
+        return False
+
+    if isinstance(answer, str):
+        return bool(answer.strip())
+
+    if isinstance(answer, (list, dict)):
+        return bool(answer)
+
+    return True
+
+
+def select_additional_training_records(
+    records: list[dict[str, Any]],
+    size: int,
+    excluded_ids: set[str],
+    seed: int = SEED,
+) -> list[dict[str, Any]]:
+    if size <= 0:
+        raise ValueError(
+            "size must be positive."
+        )
+
+    candidates = [
+        record
+        for record in records
+        if has_nonempty_gold_answer(record)
+        and str(record.get("id", "")) not in excluded_ids
+    ]
+
+    unique_candidates = {}
+    for record in candidates:
+        record_id = str(record.get("id", ""))
+        if record_id:
+            unique_candidates.setdefault(record_id, record)
+
+    candidates = list(unique_candidates.values())
+
+    if len(candidates) < size:
+        raise ValueError(
+            f"Requested {size} additional training questions, "
+            f"but only {len(candidates)} unique questions have "
+            "non-empty gold answers and are not already collected."
+        )
+
+    return select_tatqa_subset(
+        candidates,
+        size,
+        seed,
+    )
+
+
 def select_tatqa_subset(
     records: list[dict[str, Any]],
     size: int,

@@ -1,0 +1,103 @@
+{
+  "dataset": "TAT-QA",
+  "records": 50,
+  "source_test_trace": "traces/phase3/phase3_tatqa_test_counterfactual.jsonl",
+  "evaluation_scope": "Numeric answer types were re-verified with the corrected verifier in memory; other stored verifier labels were retained. The source test trace was not modified.",
+  "test_set_used_for_tuning": false,
+  "router_artifacts": "phase3/routers",
+  "metrics": {
+    "learned_cascade": {
+      "accuracy": 0.96,
+      "mean_tokens": 1137.18,
+      "median_tokens": 928.5,
+      "mean_latency_ms": 3251.483413358801,
+      "median_latency_ms": 2779.126917012036,
+      "false_stop_rate": 0.04,
+      "unnecessary_escalation_rate": 0.18,
+      "oracle_agreement_rate": 0.78,
+      "stop_distribution": {
+        "L1": 40,
+        "L2": 10,
+        "L3": 0,
+        "L4": 0
+      }
+    },
+    "always_l1": {
+      "accuracy": 0.94,
+      "mean_tokens": 931.8,
+      "mean_latency_ms": 2939.891584998695
+    },
+    "always_l4": {
+      "accuracy": 1.0,
+      "mean_tokens": 1224.64,
+      "mean_latency_ms": 16285.678105778643
+    },
+    "oracle_cascade": {
+      "accuracy": 1.0,
+      "mean_tokens": 1039.1,
+      "mean_latency_ms": 3334.6040383388274,
+      "distribution": {
+        "L1": 47,
+        "L2": 2,
+        "L3": 1,
+        "L4": 0
+      }
+    }
+  },
+  "answer_type_accuracy": {
+    "multi-span": {
+      "accuracy": 0.8333333333333334,
+      "records": 12
+    },
+    "arithmetic": {
+      "accuracy": 1.0,
+      "records": 13
+    },
+    "span": {
+      "accuracy": 1.0,
+      "records": 12
+    },
+    "count": {
+      "accuracy": 1.0,
+      "records": 13
+    }
+  },
+  "corrected_numeric_record": {
+    "problem_id": "1352b9c0-2cca-432e-807e-08580574f3a8",
+    "question": "What is the average operating income (loss) across 2017, 2018 and 2019?",
+    "gold_answer": -1161.33,
+    "derivation": "(-2,235+(-6,986)+5,737)/3",
+    "l1_answer": "$(1,159)",
+    "l1_correct": false,
+    "l2_l4_answer": "$(1,161.33)",
+    "l2_l4_correct": true,
+    "minimum_sufficient_layer": 2
+  },
+  "false_stop_examples": [
+    {
+      "problem_id": "3f709089-62ca-4cb5-828c-b8fac9da5805",
+      "layer": 1,
+      "answer_type": "multi-span",
+      "minimum_sufficient_layer": 2,
+      "reason": "L1 returned BCE common shares rather than the required Canadian and Foreign components."
+    },
+    {
+      "problem_id": "f2eb8cf3-7ba3-4efd-8bbd-293701d8b06c",
+      "layer": 1,
+      "answer_type": "multi-span",
+      "minimum_sufficient_layer": 3,
+      "reason": "L1 said the values were unavailable; L3 supplied the two gross-profit values."
+    }
+  ],
+  "router_thresholds": {
+    "layer_1": 0.8927560132646335,
+    "layer_2": 0.7514490690213093,
+    "layer_3": 0.8907709785612106,
+    "layer_4": 0.0
+  },
+  "notes": [
+    "The existing router and thresholds were evaluated unchanged after numeric answer re-verification.",
+    "The held-out set was not used to select model features or thresholds.",
+    "The 4% false-stop rate is two genuine L1 failures out of 50; it remains above the desired operational target."
+  ]
+}

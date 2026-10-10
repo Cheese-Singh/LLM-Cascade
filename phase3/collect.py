@@ -18,6 +18,7 @@ from phase3.config import (
 from phase3.dataset import (
     get_tatqa_split,
     get_tatqa_statistics,
+    has_nonempty_gold_answer,
 )
 from phase3.signals import extract_signals
 from phase3.tatqa_verifier import verify_tatqa
@@ -757,6 +758,19 @@ def collect_counterfactual_problem(
             f"L{layer_index + 1}"
         )
 
+    blank_layers = [
+        layer_key
+        for layer_key, layer in layers.items()
+        if not str(layer.get("response") or "").strip()
+    ]
+    if blank_layers:
+        raise ValueError(
+            f"Counterfactual collection for problem "
+            f"{problem['id']} returned blank responses "
+            f"for {', '.join(blank_layers)}; the record "
+            "will not be saved."
+        )
+
     minimum_sufficient_layer = None
 
     for layer_index, layer_key in enumerate(
@@ -1037,7 +1051,7 @@ def collect_split(
 
     records = get_tatqa_split(
         split,
-        subset_size=subset_size,
+        subset_size=None if ids else subset_size,
         seed=SEED,
     )
 
@@ -1070,7 +1084,7 @@ def collect_split(
     original_total = len(records)
 
     if ids:
-        records = [
+        selected_records = [
             record
             for record in records
             if str(
@@ -1078,10 +1092,22 @@ def collect_split(
             ) in ids
         ]
 
+        if counterfactual:
+            selected_records = [
+                record
+                for record in selected_records
+                if has_nonempty_gold_answer(record)
+            ]
+
         found_ids = {
             str(record["id"])
-            for record in records
+            for record in selected_records
         }
+        records = [
+            record
+            for record in selected_records
+            if str(record["id"]) not in skip_ids
+        ]
 
         missing_ids = sorted(
             ids - found_ids

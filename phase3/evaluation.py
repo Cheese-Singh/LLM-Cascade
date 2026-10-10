@@ -13,6 +13,7 @@ from phase3.router import (
     load_thresholds,
     predict_correctness,
 )
+from phase3.signals import extract_signals
 
 
 def load_records(
@@ -174,25 +175,18 @@ def _simulate_record(
                 threshold_config
             )
 
-        signals = layer.get(
-            "signals",
-            {},
+        layer_idx = int(layer_key.split("_")[-1]) - 1
+        prev_layer = layers.get(f"layer_{layer_idx}")
+        signals = extract_signals(
+            response=str(layer.get("response") or ""),
+            problem=record,
+            previous_response=(
+                str(prev_layer.get("response") or "")
+                if prev_layer
+                else None
+            ),
         )
-
-        if "is_arithmetic" not in signals:
-            from phase3.signals import extract_signals
-            layer_idx = int(layer_key.split("_")[-1]) - 1
-            prev_resp = None
-            if layer_idx > 0:
-                prev_layer = layers.get(f"layer_{layer_idx}")
-                if prev_layer:
-                    prev_resp = prev_layer.get("response")
-            signals = extract_signals(
-                response=layer.get("response", ""),
-                problem=record,
-                previous_response=prev_resp,
-            )
-            layer["signals"] = signals
+        layer["signals"] = signals
 
         probability = predict_correctness(
             router,

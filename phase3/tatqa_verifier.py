@@ -381,7 +381,8 @@ def _infer_context_sign(
     suffix = after.lstrip()
 
     if re.search(
-        rf"\(\s*{CURRENCY_PATTERN}\s*$",
+        rf"(?:\(\s*{CURRENCY_PATTERN}?\s*|"
+        rf"{CURRENCY_PATTERN}\s*\(\s*)$",
         prefix,
     ) and re.match(
         r"^\)",
@@ -1877,6 +1878,24 @@ def _parse_number(
     )
 
 
+def _numeric_answer_candidate(
+    numbers: list[dict[str, Any]],
+) -> dict[str, Any]:
+    non_year_numbers = [
+        number
+        for number in numbers
+        if not YEAR_PATTERN.fullmatch(
+            str(number.get("token", "")).lstrip("+-")
+        )
+    ]
+
+    return (
+        non_year_numbers[0]
+        if non_year_numbers
+        else numbers[0]
+    )
+
+
 def _numeric_match(
     candidate_text: str,
     expected: Any,
@@ -1932,8 +1951,8 @@ def _numeric_match(
             "reason": "gold_answer_is_not_numeric",
         }
 
-    candidate_number = (
-        candidate_numbers[0]
+    candidate_number = _numeric_answer_candidate(
+        candidate_numbers
     )
 
     expected_number = (

@@ -11,16 +11,25 @@ from phase3.collect import (
     load_existing_records,
 )
 from phase3.config import (
+    PHASE3_ROOT,
+    EXTRA_TRAIN_SELECTION_PATH,
+    EXTRA_TRAIN_TRACE_PATH,
     MAX_FALSE_STOP_RATE,
     ROUTERS_ROOT,
     TATQA_SUBSET_SIZES,
     TRACES_ROOT,
+)
+from phase3.dataset import (
+    get_tatqa_split,
+    has_nonempty_gold_answer,
+    select_additional_training_records,
 )
 from phase3.evaluation import (
     evaluate_test,
     print_evaluation,
 )
 from phase3.router import (
+    audit_features,
     load_records,
     train_all_routers,
 )
@@ -34,6 +43,7 @@ def collect_command(
     output: Path | None,
     start_from: int | None,
     end_at: int | None,
+    additional_training_count: int | None,
 ) -> None:
     suffix = (
         "_counterfactual"
@@ -45,9 +55,13 @@ def collect_command(
         output
         if output is not None
         else (
-            TRACES_ROOT
-            / f"phase3_tatqa_{split}"
-            f"{suffix}.jsonl"
+            EXTRA_TRAIN_TRACE_PATH
+            if additional_training_count is not None
+            else (
+                TRACES_ROOT
+                / f"phase3_tatqa_{split}"
+                f"{suffix}.jsonl"
+            )
         )
     )
 
@@ -74,6 +88,191 @@ def collect_command(
         if end_at is not None
         else limit
     )
+
+    if additional_training_count is not None:
+        if split != "train" or not counterfactual:
+            raise ValueError(
+                "--additional-training-count requires "
+                "--split train and --counterfactual."
+            )
+        if any(
+            value is not None
+            for value in (limit, subset_size, start_from, end_at)
+        ):
+            raise ValueError(
+                "--additional-training-count cannot be combined "
+                "with --limit, --subset-size, --start-from, or --end-at."
+            )
+        if additional_training_count <= 0:
+            raise ValueError(
+                "--additional-training-count must be positive."
+            )
+        if not output_path.resolve().is_relative_to(
+            PHASE3_ROOT.resolve()
+        ):
+            raise ValueError(
+                "Additional training traces must be saved under "
+                f"{PHASE3_ROOT}."
+            )
+
+        selection_path = EXTRA_TRAIN_SELECTION_PATH
+
+        if selection_path.exists():
+            selection_records = load_existing_records(
+                selection_path
+            )
+            if len(selection_records) != additional_training_count:
+                raise ValueError(
+                    f"Existing selection file {selection_path} contains "
+                    f"{len(selection_records)} records, but "
+                    f"{additional_training_count} were requested."
+                )
+            if any(
+                record.get("split") != "train"
+                or record.get("gold_answer_nonempty") is not True
+                or not str(record.get("problem_id") or "")
+                for record in selection_records
+            ):
+                raise ValueError(
+                    f"Selection manifest {selection_path} contains "
+                    "invalid or non-training entries."
+                )
+        else:
+            training_pool = get_tatqa_split(
+                "train",
+                subset_size=None,
+            )
+            base_path = (
+                TRACES_ROOT
+                / "phase3_tatqa_train.jsonl"
+            )
+            counterfactual_path = (
+                TRACES_ROOT
+                / "phase3_tatqa_train_counterfactual.jsonl"
+            )
+            known_records = (
+                load_existing_records(base_path)
+                + load_existing_records(counterfactual_path)
+                + load_existing_records(output_path)
+            )
+            excluded_ids = {
+                str(record.get("problem_id"))
+                for record in known_records
+                if record.get("problem_id") is not None
+            }
+            eligible_count = sum(
+                has_nonempty_gold_answer(record)
+                and str(record.get("id", "")) not in excluded_ids
+                for record in training_pool
+            )
+            selected = select_additional_training_records(
+                training_pool,
+                additional_training_count,
+                excluded_ids,
+            )
+            selection_records = [
+                {
+                    "problem_id": record["id"],
+                    "split": "train",
+                    "answer_type": record.get("answer_type"),
+                    "gold_answer_nonempty": True,
+                }
+                for record in selected
+            ]
+            selection_path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+            with selection_path.open(
+                "w",
+                encoding="utf-8",
+            ) as handle:
+                for record in selection_records:
+                    handle.write(
+                        json.dumps(record) + "\n"
+                    )
+            print(
+                f"Selected {len(selected)} of {eligible_count} "
+                "eligible new training questions with non-empty gold answers."
+            )
+            print(
+                f"Selection manifest: {selection_path}"
+            )
+
+        requested_ids = {
+            str(record["problem_id"])
+            for record in selection_records
+        }
+        if len(requested_ids) != additional_training_count:
+            raise ValueError(
+                "The saved selection manifest contains duplicate or missing IDs."
+            )
+
+        existing_records = load_existing_records(
+            output_path
+        )
+        completed_ids = {
+            str(record.get("problem_id"))
+            for record in existing_records
+            if record.get("problem_id") is not None
+            and set(record.get("layers", {})) == set(
+                ("layer_1", "layer_2", "layer_3", "layer_4")
+            )
+            and all(
+                str(layer.get("response") or "").strip()
+                for layer in record.get("layers", {}).values()
+            )
+        }
+        records = collect_split(
+            domain="finance",
+            split="train",
+            counterfactual=True,
+            skip_ids=completed_ids,
+            output_path=output_path,
+            ids=requested_ids,
+        )
+        saved_records = load_existing_records(
+            output_path
+        )
+        saved_by_id = {
+            str(record.get("problem_id")): record
+            for record in saved_records
+        }
+        invalid_ids = [
+            problem_id
+            for problem_id in requested_ids
+            if problem_id in saved_by_id
+            and (
+                not has_nonempty_gold_answer(
+                    {"answer": saved_by_id[problem_id].get("answer")}
+                )
+                or set(saved_by_id[problem_id].get("layers", {}))
+                != {"layer_1", "layer_2", "layer_3", "layer_4"}
+                or any(
+                    not str(layer.get("response") or "").strip()
+                    for layer in saved_by_id[problem_id]
+                    .get("layers", {})
+                    .values()
+                )
+            )
+        ]
+        if invalid_ids:
+            raise ValueError(
+                "The additional training trace contains incomplete records: "
+                + ", ".join(sorted(invalid_ids))
+            )
+        missing_ids = requested_ids - set(saved_by_id)
+        if missing_ids:
+            raise RuntimeError(
+                "The additional training collection is incomplete; "
+                f"{len(missing_ids)} selected IDs have no saved trace: "
+                + ", ".join(sorted(missing_ids))
+            )
+        print(
+            f"Collected {len(records)} additional records; "
+            f"{len(saved_by_id)} of {len(requested_ids)} are saved."
+        )
+        return
 
     existing_records = load_existing_records(
         output_path
@@ -223,6 +422,17 @@ def train_command(
         print(f"Merging counterfactual training trace: {cf_companion.name}")
         train_records.extend(load_records(cf_companion))
 
+    if EXTRA_TRAIN_TRACE_PATH.exists():
+        extra_records = load_records(
+            EXTRA_TRAIN_TRACE_PATH
+        )
+        print(
+            f"Merging additional counterfactual training data: "
+            f"{len(extra_records)} records from "
+            f"{EXTRA_TRAIN_TRACE_PATH}"
+        )
+        train_records.extend(extra_records)
+
     validation_records = load_records(
         validation_path
     )
@@ -241,6 +451,31 @@ def train_command(
             indent=2,
         )
     )
+
+
+def audit_command(
+    train_path: Path,
+    validation_path: Path,
+) -> None:
+    train_records = load_records(train_path)
+    cf_companion = (
+        train_path.parent
+        / (train_path.stem + "_counterfactual.jsonl")
+    )
+    if (
+        cf_companion.exists()
+        and cf_companion.resolve() != train_path.resolve()
+    ):
+        train_records.extend(load_records(cf_companion))
+    if EXTRA_TRAIN_TRACE_PATH.exists():
+        train_records.extend(load_records(EXTRA_TRAIN_TRACE_PATH))
+
+    validation_records = load_records(validation_path)
+    results = audit_features(
+        train_records,
+        validation_records,
+    )
+    print(json.dumps(results, indent=2))
 
 
 def test_command(
@@ -727,6 +962,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     collect_parser.add_argument(
+        "--additional-training-count",
+        type=int,
+        default=None,
+        help=(
+            "Select and collect this many new, unique train-split "
+            "questions with non-empty gold answers. Requires "
+            "--split train --counterfactual."
+        ),
+    )
+
+    collect_parser.add_argument(
         "--start-from",
         type=int,
         default=None,
@@ -764,6 +1010,24 @@ def build_parser() -> argparse.ArgumentParser:
         default=(
             TRACES_ROOT
             / "phase3_tatqa_train.jsonl"
+        ),
+    )
+
+    audit_parser = subparsers.add_parser(
+        "audit",
+        help="Measure validation-set feature ablations for each router.",
+    )
+    audit_parser.add_argument(
+        "--train",
+        type=Path,
+        default=TRACES_ROOT / "phase3_tatqa_train.jsonl",
+    )
+    audit_parser.add_argument(
+        "--validation",
+        type=Path,
+        default=(
+            TRACES_ROOT
+            / "phase3_tatqa_validation_counterfactual.jsonl"
         ),
     )
 
@@ -930,6 +1194,7 @@ def main() -> None:
             output=args.output,
             start_from=args.start_from,
             end_at=args.end_at,
+            additional_training_count=args.additional_training_count,
         )
 
     elif args.command == "train":
@@ -944,6 +1209,12 @@ def main() -> None:
             test_path=args.test,
             router_directory=args.routers,
             output=args.output,
+        )
+
+    elif args.command == "audit":
+        audit_command(
+            train_path=args.train,
+            validation_path=args.validation,
         )
 
     elif args.command == "analyze":
