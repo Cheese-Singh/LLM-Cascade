@@ -478,7 +478,7 @@ The optimization adds 100 verified training questions, fixes the missing `final_
 | **Always-L1** | 94.00% | 931.8 | 2.94s | +81.95% | — | — |
 | **Fixed Cascade** ($\text{conf} \ge 0.95$) | 94.00% | 992.3 | 3.00s | +81.58% | 6.00% | 4.00% |
 | Learned Cascade (original baseline; pre-verifier correction) | 96.00% | 1,539.2 | 3.91s | +76.00% | 2.04% | 46.94% |
-| **Learned Cascade (optimized LogReg; corrected numeric labels)** | **96.00%** | **1,137.2** | **3.25s** | **+80.03%** | **4.00%** | **18.37%** |
+| **Learned Cascade (optimized LogReg; corrected numeric labels)** | **96.00%** | **1,137.2** | **3.25s** | **+80.03%** | **4.00%** | **18.00%** |
 | **Always-L4 (corrected numeric labels)** | 100.00% | 1,224.6 | 16.29s | 0.00% | — | — |
 | **Oracle Cascade (corrected numeric labels)** | 100.00% | 1,039.1 | 3.33s | +79.52% | 0.00% | 0.00% |
 
