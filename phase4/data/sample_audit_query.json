@@ -1,0 +1,51 @@
+{
+  "query_id": "DEMO_GST_001",
+  "query": "I expected this expense to be ₹12,000, but the invoice shows ₹14,160. Why?",
+  "evidence": {
+    "business": {
+      "business_name": "Apex Tech Solutions Pvt Ltd",
+      "gstin": "27AAPCA1234F1Z5",
+      "state_code": "27"
+    },
+    "invoice": {
+      "invoice_number": "INV-2026-0891",
+      "invoice_date": "2026-09-15",
+      "subtotal": 12000.00,
+      "cgst_total": 1080.00,
+      "sgst_total": 1080.00,
+      "igst_total": 0.00,
+      "invoice_total": 14160.00,
+      "currency": "INR"
+    },
+    "items": [
+      {
+        "line_number": 1,
+        "description": "Cloud Architecture Consulting",
+        "hsn_sac_code": "998315",
+        "taxable_value": 12000.00,
+        "gst_rate": 18.00,
+        "cgst_amount": 1080.00,
+        "sgst_amount": 1080.00,
+        "line_total": 14160.00
+      }
+    ],
+    "provenance": [
+      {
+        "provenance_id": "prov_demo_subtotal",
+        "field_name": "subtotal",
+        "field_value": "12000.00"
+      },
+      {
+        "provenance_id": "prov_demo_total",
+        "field_name": "invoice_total",
+        "field_value": "14160.00"
+      }
+    ]
+  },
+  "ground_truth": {
+    "expected_status": "DISCREPANCY",
+    "expected_numbers": [12000.0, 14160.0, 2160.0],
+    "allow_abstain": false,
+    "required_citations": ["prov_demo_total"]
+  }
+}

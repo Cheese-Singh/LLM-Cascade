@@ -1,0 +1,16 @@
+|--- numeric_density <= 0.34
+|   |--- abstention_flag <= 0.50
+|   |   |--- numeric_density <= 0.20
+|   |   |   |--- class: 1
+|   |   |--- numeric_density >  0.20
+|   |   |   |--- class: 0
+|   |--- abstention_flag >  0.50
+|   |   |--- length_log <= 0.75
+|   |   |   |--- class: 0
+|   |   |--- length_log >  0.75
+|   |   |   |--- class: 1
+|--- numeric_density >  0.34
+|   |--- audit_kw_density <= 0.15
+|   |   |--- class: 1
+|   |--- audit_kw_density >  0.15
+|   |   |--- class: 0

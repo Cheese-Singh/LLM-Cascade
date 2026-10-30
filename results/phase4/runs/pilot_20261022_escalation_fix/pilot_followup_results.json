@@ -1,0 +1,106 @@
+{
+  "num_cases": 6,
+  "baseline_router": {
+    "cases_passed": 3,
+    "false_stops": 3,
+    "stopped_tiers": [
+      "layer_1",
+      "layer_1",
+      "layer_1",
+      "layer_1",
+      "layer_1",
+      "layer_1"
+    ],
+    "accuracy_rate": 0.5,
+    "false_stop_rate": 0.5
+  },
+  "conservative_gate": {
+    "cases_passed": 6,
+    "false_stops": 0,
+    "stopped_tiers": [
+      "layer_1",
+      "layer_1",
+      "layer_1",
+      "layer_1",
+      "layer_2",
+      "layer_1"
+    ],
+    "accuracy_rate": 1.0,
+    "false_stop_rate": 0.0
+  },
+  "per_case_comparison": [
+    {
+      "query_id": "AUDIT_POC_008",
+      "scenario_type": "contradictory_evidence",
+      "baseline_stopped_tier": "layer_1",
+      "baseline_pass": true,
+      "gate_path": [
+        "layer_1"
+      ],
+      "gate_stopped_tier": "layer_1",
+      "gate_pass": true,
+      "false_stop_prevented": false
+    },
+    {
+      "query_id": "AUDIT_POC_007",
+      "scenario_type": "unanswerable_missing_evidence",
+      "baseline_stopped_tier": "layer_1",
+      "baseline_pass": true,
+      "gate_path": [
+        "layer_1"
+      ],
+      "gate_stopped_tier": "layer_1",
+      "gate_pass": true,
+      "false_stop_prevented": false
+    },
+    {
+      "query_id": "AUDIT_POC_001",
+      "scenario_type": "reconciliation_gst",
+      "baseline_stopped_tier": "layer_1",
+      "baseline_pass": true,
+      "gate_path": [
+        "layer_1"
+      ],
+      "gate_stopped_tier": "layer_1",
+      "gate_pass": true,
+      "false_stop_prevented": false
+    },
+    {
+      "query_id": "AUDIT_POC_002",
+      "scenario_type": "reconciliation_discount",
+      "baseline_stopped_tier": "layer_1",
+      "baseline_pass": false,
+      "gate_path": [
+        "layer_1"
+      ],
+      "gate_stopped_tier": "layer_1",
+      "gate_pass": true,
+      "false_stop_prevented": true
+    },
+    {
+      "query_id": "AUDIT_POC_009",
+      "scenario_type": "adversarial_distractor",
+      "baseline_stopped_tier": "layer_1",
+      "baseline_pass": false,
+      "gate_path": [
+        "layer_1",
+        "layer_2"
+      ],
+      "gate_stopped_tier": "layer_2",
+      "gate_pass": true,
+      "false_stop_prevented": true
+    },
+    {
+      "query_id": "AUDIT_POC_004",
+      "scenario_type": "factual_extraction",
+      "baseline_stopped_tier": "layer_1",
+      "baseline_pass": false,
+      "gate_path": [
+        "layer_1"
+      ],
+      "gate_stopped_tier": "layer_1",
+      "gate_pass": true,
+      "false_stop_prevented": true
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+Frozen router loaded from: /Users/ekamveersingh/Documents/GitHub/LLM-Cascade/results/phase4/runs/router_training_20261029_154818/logistic_regression
+Thresholds: {'layer_1': 0.6799999999999999, 'layer_2': 0.5, 'layer_3': 0.5, 'layer_4': 0.0}
+Historical cache entries: 47
+Cache ∩ test split = ∅ ✓ (no test data in historical cache)
+
+============================================================
+Phase IV — Final Held-Out Test Evaluation
+Router:     Logistic Regression (FROZEN — no threshold changes)
+Test cases: 43
+============================================================
+
+[TEST] Case 1/43 (2.3%) | AUDIT_POC_078 (reverse_charge) | Elapsed: 00m 00s | ETA: Estimating...
+  ✓ stopped at layer_2 | correct=True | 143.8s
+[TEST] Case 2/43 (4.7%) | AUDIT_POC_079 (unanswerable_missing_evidence) | Elapsed: 02m 23s | ETA: 01h 40m 37s
+  ✗ stopped at layer_4 | correct=False | 73.6s
+[TEST] Case 3/43 (7.0%) | AUDIT_POC_080 (contradictory_evidence) | Elapsed: 03m 37s | ETA: 01h 14m 15s
+  ✓ stopped at layer_2 | correct=True | 56.5s
+[TEST] Case 4/43 (9.3%) | AUDIT_POC_081 (adversarial_distractor) | Elapsed: 04m 33s | ETA: 01h 00m 50s
+  ✓ stopped at layer_2 | correct=True | 179.3s
+[TEST] Case 5/43 (11.6%) | AUDIT_POC_082 (reconciliation_gst) | Elapsed: 07m 33s | ETA: 01h 13m 38s
+  ✓ stopped at layer_2 | correct=True | 63.5s
+[TEST] Case 6/43 (14.0%) | AUDIT_POC_083 (reconciliation_discount) | Elapsed: 08m 36s | ETA: 01h 05m 26s
+  ✓ stopped at layer_1 | correct=True | 85.7s
+[TEST] Case 7/43 (16.3%) | AUDIT_POC_084 (reconciliation_payment) | Elapsed: 10m 02s | ETA: 01h 01m 54s
+  ✓ stopped at layer_2 | correct=True | 154.3s
+[TEST] Case 8/43 (18.6%) | AUDIT_POC_085 (factual_extraction) | Elapsed: 12m 36s | ETA: 01h 04m 51s
+  ✓ stopped at layer_2 | correct=True | 37.0s
+[TEST] Case 9/43 (20.9%) | AUDIT_POC_086 (tax_audit_interstate) | Elapsed: 13m 13s | ETA: 57m 52s
+  ✓ stopped at layer_2 | correct=True | 139.2s
+[TEST] Case 10/43 (23.3%) | AUDIT_POC_087 (reverse_charge) | Elapsed: 15m 32s | ETA: 58m 43s
+  ✓ stopped at layer_2 | correct=True | 39.8s
+[TEST] Case 11/43 (25.6%) | AUDIT_POC_088 (unanswerable_missing_evidence) | Elapsed: 16m 12s | ETA: 53m 29s
+  ✓ stopped at layer_4 | correct=True | 43.9s
+[TEST] Case 12/43 (27.9%) | AUDIT_POC_089 (contradictory_evidence) | Elapsed: 16m 56s | ETA: 49m 16s
+  ✓ stopped at layer_2 | correct=True | 268.5s
+[TEST] Case 13/43 (30.2%) | AUDIT_POC_090 (adversarial_distractor) | Elapsed: 21m 24s | ETA: 55m 19s
+  ✓ stopped at layer_1 | correct=True | 46.4s
+[TEST] Case 14/43 (32.6%) | AUDIT_POC_091 (reconciliation_gst) | Elapsed: 22m 11s | ETA: 51m 12s
+  ✓ stopped at layer_1 | correct=True | 49.1s
+[TEST] Case 15/43 (34.9%) | AUDIT_POC_092 (reconciliation_discount) | Elapsed: 23m 00s | ETA: 47m 39s
+  ✓ stopped at layer_2 | correct=True | 53.5s
+[TEST] Case 16/43 (37.2%) | AUDIT_POC_093 (reconciliation_payment) | Elapsed: 23m 54s | ETA: 44m 36s
+  ✓ stopped at layer_2 | correct=True | 51.0s
+[TEST] Case 17/43 (39.5%) | AUDIT_POC_094 (factual_extraction) | Elapsed: 24m 45s | ETA: 41m 45s
+  ✓ stopped at layer_2 | correct=True | 39.3s
+[TEST] Case 18/43 (41.9%) | AUDIT_POC_095 (tax_audit_interstate) | Elapsed: 25m 24s | ETA: 38m 51s
+  ✗ stopped at layer_1 | correct=False | 44.0s
+[TEST] Case 19/43 (44.2%) | AUDIT_POC_096 (reverse_charge) | Elapsed: 26m 08s | ETA: 36m 18s
+  ✓ stopped at layer_2 | correct=True | 42.0s
+[TEST] Case 20/43 (46.5%) | AUDIT_POC_097 (unanswerable_missing_evidence) | Elapsed: 26m 50s | ETA: 33m 54s
+  ✗ stopped at layer_4 | correct=False | 78.8s
+[TEST] Case 21/43 (48.8%) | AUDIT_POC_098 (contradictory_evidence) | Elapsed: 28m 09s | ETA: 32m 22s
+  ✓ stopped at layer_2 | correct=True | 67.1s
+[TEST] Case 22/43 (51.2%) | AUDIT_POC_099 (adversarial_distractor) | Elapsed: 29m 16s | ETA: 30m 39s
+  ✓ stopped at layer_2 | correct=True | 81.4s
+[TEST] Case 23/43 (53.5%) | AUDIT_POC_100 (reconciliation_gst) | Elapsed: 30m 37s | ETA: 29m 14s
+  ✓ stopped at layer_1 | correct=True | 56.2s
+[TEST] Case 24/43 (55.8%) | AUDIT_POC_101 (reconciliation_discount) | Elapsed: 31m 33s | ETA: 27m 26s
+  ✗ stopped at layer_2 | correct=False | 46.3s
+[TEST] Case 25/43 (58.1%) | AUDIT_POC_102 (reconciliation_payment) | Elapsed: 32m 20s | ETA: 25m 35s
+  ✓ stopped at layer_1 | correct=True | 73.1s
+[TEST] Case 26/43 (60.5%) | AUDIT_POC_103 (factual_extraction) | Elapsed: 33m 33s | ETA: 24m 09s
+  ✓ stopped at layer_2 | correct=True | 45.9s
+[TEST] Case 27/43 (62.8%) | AUDIT_POC_104 (tax_audit_interstate) | Elapsed: 34m 19s | ETA: 22m 26s
+  ✓ stopped at layer_2 | correct=True | 55.6s
+[TEST] Case 28/43 (65.1%) | AUDIT_POC_105 (reverse_charge) | Elapsed: 35m 14s | ETA: 20m 53s
+  ✓ stopped at layer_2 | correct=True | 80.1s
+[TEST] Case 29/43 (67.4%) | AUDIT_POC_106 (unanswerable_missing_evidence) | Elapsed: 36m 34s | ETA: 19m 35s
+  ✓ stopped at layer_4 | correct=True | 45.0s
+[TEST] Case 30/43 (69.8%) | AUDIT_POC_107 (contradictory_evidence) | Elapsed: 37m 19s | ETA: 18m 01s
+  ✓ stopped at layer_2 | correct=True | 87.0s
+[TEST] Case 31/43 (72.1%) | AUDIT_POC_108 (adversarial_distractor) | Elapsed: 38m 46s | ETA: 16m 48s
+  ✓ stopped at layer_1 | correct=True | 41.8s
+[TEST] Case 32/43 (74.4%) | AUDIT_POC_109 (reconciliation_gst) | Elapsed: 39m 28s | ETA: 15m 16s
+  ✓ stopped at layer_2 | correct=True | 57.2s
+[TEST] Case 33/43 (76.7%) | AUDIT_POC_110 (reconciliation_discount) | Elapsed: 40m 25s | ETA: 13m 53s
+  ✓ stopped at layer_2 | correct=True | 75.4s
+[TEST] Case 34/43 (79.1%) | AUDIT_POC_111 (reconciliation_payment) | Elapsed: 41m 41s | ETA: 12m 37s
+  ✓ stopped at layer_1 | correct=True | 57.2s
+[TEST] Case 35/43 (81.4%) | AUDIT_POC_112 (factual_extraction) | Elapsed: 42m 38s | ETA: 11m 17s
+  ✓ stopped at layer_2 | correct=True | 100.5s
+[TEST] Case 36/43 (83.7%) | AUDIT_POC_113 (tax_audit_interstate) | Elapsed: 44m 18s | ETA: 10m 07s
+  ✓ stopped at layer_2 | correct=True | 82.0s
+[TEST] Case 37/43 (86.0%) | AUDIT_POC_114 (reverse_charge) | Elapsed: 45m 40s | ETA: 08m 52s
+  ✗ stopped at layer_2 | correct=False | 116.3s
+[TEST] Case 38/43 (88.4%) | AUDIT_POC_115 (unanswerable_missing_evidence) | Elapsed: 47m 37s | ETA: 07m 43s
+  ✗ stopped at layer_3 | correct=False | 38.9s
+[TEST] Case 39/43 (90.7%) | AUDIT_POC_116 (contradictory_evidence) | Elapsed: 48m 16s | ETA: 06m 21s
+  ✓ stopped at layer_2 | correct=True | 58.5s
+[TEST] Case 40/43 (93.0%) | AUDIT_POC_117 (adversarial_distractor) | Elapsed: 49m 14s | ETA: 05m 03s
+  ✓ stopped at layer_2 | correct=True | 55.8s
+[TEST] Case 41/43 (95.3%) | AUDIT_POC_118 (reconciliation_gst) | Elapsed: 50m 10s | ETA: 03m 45s
+  ✓ stopped at layer_2 | correct=True | 43.0s
+[TEST] Case 42/43 (97.7%) | AUDIT_POC_119 (reconciliation_discount) | Elapsed: 50m 53s | ETA: 02m 28s
+  ✓ stopped at layer_2 | correct=True | 119.4s
+[TEST] Case 43/43 (100.0%) | AUDIT_POC_120 (reconciliation_payment) | Elapsed: 52m 52s | ETA: 01m 15s
+  ✓ stopped at layer_1 | correct=True | 101.8s
+
+============================================================
+FINAL TEST RESULTS  (n=43)
+============================================================
+Accuracy:         86.0%  (37/43 correct)
+False Stop Rate:  10.3%  (4/39)
+Stop distribution: {'layer_1': 9, 'layer_2': 29, 'layer_3': 1, 'layer_4': 4}
+Avg tokens/case:  27031
+Wall time:        54m 34s
+
+Per-scenario accuracy:
+  adversarial_distractor              5/5  (100%)
+  contradictory_evidence              5/5  (100%)
+  factual_extraction                  4/4  (100%)
+  reconciliation_discount             4/5  (80%)
+  reconciliation_gst                  5/5  (100%)
+  reconciliation_payment              5/5  (100%)
+  reverse_charge                      4/5  (80%)
+  tax_audit_interstate                3/4  (75%)
+  unanswerable_missing_evidence       2/5  (40%)
+
+Results saved to: /Users/ekamveersingh/Documents/GitHub/LLM-Cascade/results/phase4/test_evaluation/test_results.json
+Summary saved to: /Users/ekamveersingh/Documents/GitHub/LLM-Cascade/results/phase4/test_evaluation/test_summary.json
+============================================================
+

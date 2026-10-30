@@ -1,0 +1,13 @@
+{
+  "split": "validation",
+  "total_cases": 26,
+  "label_distribution": {
+    "layer_1": 22,
+    "layer_2": 4
+  },
+  "requires_manual_review_count": 0,
+  "certified_count": 26,
+  "total_wall_time_s": 1459.72,
+  "dataset_file": "/Users/ekamveersingh/Documents/GitHub/LLM-Cascade/results/phase4/runs/genuine_validation_full/genuine_validation_dataset.json",
+  "traces_file": "/Users/ekamveersingh/Documents/GitHub/LLM-Cascade/traces/phase4/runs/genuine_validation_full/validation_traces.jsonl"
+}

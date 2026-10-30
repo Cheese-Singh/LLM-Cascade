@@ -1,0 +1,10 @@
+|--- numeric_density <= 0.22
+|   |--- class: 0
+|--- numeric_density >  0.22
+|   |--- audit_kw_density <= 0.07
+|   |   |--- audit_kw_density <= 0.07
+|   |   |   |--- class: 1
+|   |   |--- audit_kw_density >  0.07
+|   |   |   |--- class: 0
+|   |--- audit_kw_density >  0.07
+|   |   |--- class: 1

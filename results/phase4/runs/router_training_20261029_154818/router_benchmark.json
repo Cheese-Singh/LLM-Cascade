@@ -1,0 +1,166 @@
+{
+  "timestamp": "20261029_154818",
+  "train_records_count": 51,
+  "validation_records_count": 26,
+  "logistic_regression_summary": {
+    "layer_1": {
+      "threshold": 0.6799999999999999,
+      "train_samples": 51,
+      "val_samples": 26,
+      "train_positive_rate": 0.7647058823529411
+    },
+    "layer_2": {
+      "threshold": 0.5,
+      "train_samples": 51,
+      "val_samples": 26,
+      "train_positive_rate": 0.8823529411764706
+    },
+    "layer_3": {
+      "threshold": 0.5,
+      "train_samples": 51,
+      "val_samples": 26,
+      "train_positive_rate": 0.9019607843137255
+    }
+  },
+  "decision_tree_summary": {
+    "layer_1": {
+      "threshold": 0.95,
+      "train_samples": 51,
+      "val_samples": 26,
+      "rules": "|--- numeric_density <= 0.34\n|   |--- abstention_flag <= 0.50\n|   |   |--- numeric_density <= 0.20\n|   |   |   |--- class: 1\n|   |   |--- numeric_density >  0.20\n|   |   |   |--- class: 0\n|   |--- abstention_flag >  0.50\n|   |   |--- length_log <= 0.75\n|   |   |   |--- class: 0\n|   |   |--- length_log >  0.75\n|   |   |   |--- class: 1\n|--- numeric_density >  0.34\n|   |--- audit_kw_density <= 0.15\n|   |   |--- class: 1\n|   |--- audit_kw_density >  0.15\n|   |   |--- class: 0\n"
+    },
+    "layer_2": {
+      "threshold": 0.5,
+      "train_samples": 51,
+      "val_samples": 26,
+      "rules": "|--- numeric_density <= 0.22\n|   |--- class: 0\n|--- numeric_density >  0.22\n|   |--- audit_kw_density <= 0.07\n|   |   |--- audit_kw_density <= 0.07\n|   |   |   |--- class: 1\n|   |   |--- audit_kw_density >  0.07\n|   |   |   |--- class: 0\n|   |--- audit_kw_density >  0.07\n|   |   |--- class: 1\n"
+    },
+    "layer_3": {
+      "threshold": 0.5,
+      "train_samples": 51,
+      "val_samples": 26,
+      "rules": "|--- length_log <= 0.69\n|   |--- numeric_density <= 0.39\n|   |   |--- class: 0\n|   |--- numeric_density >  0.39\n|   |   |--- class: 1\n|--- length_log >  0.69\n|   |--- class: 1\n"
+    }
+  },
+  "validation_benchmark": [
+    {
+      "policy": "Always-L1",
+      "total_cases": 26,
+      "correct_count": 22,
+      "accuracy": 84.62,
+      "false_stops": 4,
+      "total_stops": 26,
+      "false_stop_rate_pct": 15.38,
+      "layer_stop_distribution": {
+        "layer_1": 26,
+        "layer_2": 0,
+        "layer_3": 0,
+        "layer_4": 0
+      },
+      "avg_tokens_per_case": 1820.9,
+      "avg_latency_ms": 5858.1
+    },
+    {
+      "policy": "Always-L4",
+      "total_cases": 26,
+      "correct_count": 21,
+      "accuracy": 80.77,
+      "false_stops": 0,
+      "total_stops": 0,
+      "false_stop_rate_pct": 0.0,
+      "layer_stop_distribution": {
+        "layer_1": 0,
+        "layer_2": 0,
+        "layer_3": 0,
+        "layer_4": 26
+      },
+      "avg_tokens_per_case": 9584.3,
+      "avg_latency_ms": 57131.0
+    },
+    {
+      "policy": "Conservative-Gate",
+      "total_cases": 26,
+      "correct_count": 24,
+      "accuracy": 92.31,
+      "false_stops": 2,
+      "total_stops": 26,
+      "false_stop_rate_pct": 7.69,
+      "layer_stop_distribution": {
+        "layer_1": 19,
+        "layer_2": 7,
+        "layer_3": 0,
+        "layer_4": 0
+      },
+      "avg_tokens_per_case": 2476.3,
+      "avg_latency_ms": 6521.9
+    },
+    {
+      "policy": "Logistic-Regression-Router",
+      "total_cases": 26,
+      "correct_count": 25,
+      "accuracy": 96.15,
+      "false_stops": 0,
+      "total_stops": 23,
+      "false_stop_rate_pct": 0.0,
+      "layer_stop_distribution": {
+        "layer_1": 7,
+        "layer_2": 16,
+        "layer_3": 0,
+        "layer_4": 3
+      },
+      "avg_tokens_per_case": 4047.5,
+      "avg_latency_ms": 13306.2
+    },
+    {
+      "policy": "Decision-Tree-Router",
+      "total_cases": 26,
+      "correct_count": 22,
+      "accuracy": 84.62,
+      "false_stops": 3,
+      "total_stops": 24,
+      "false_stop_rate_pct": 12.5,
+      "layer_stop_distribution": {
+        "layer_1": 16,
+        "layer_2": 8,
+        "layer_3": 0,
+        "layer_4": 2
+      },
+      "avg_tokens_per_case": 3048.0,
+      "avg_latency_ms": 9057.7
+    },
+    {
+      "policy": "Hybrid-Gate-Router",
+      "total_cases": 26,
+      "correct_count": 25,
+      "accuracy": 96.15,
+      "false_stops": 0,
+      "total_stops": 23,
+      "false_stop_rate_pct": 0.0,
+      "layer_stop_distribution": {
+        "layer_1": 3,
+        "layer_2": 20,
+        "layer_3": 0,
+        "layer_4": 3
+      },
+      "avg_tokens_per_case": 4433.1,
+      "avg_latency_ms": 13772.5
+    },
+    {
+      "policy": "Oracle",
+      "total_cases": 26,
+      "correct_count": 26,
+      "accuracy": 100.0,
+      "false_stops": 0,
+      "total_stops": 26,
+      "false_stop_rate_pct": 0.0,
+      "layer_stop_distribution": {
+        "layer_1": 22,
+        "layer_2": 4,
+        "layer_3": 0,
+        "layer_4": 0
+      },
+      "avg_tokens_per_case": 2136.5,
+      "avg_latency_ms": 6117.7
+    }
+  ]
+}

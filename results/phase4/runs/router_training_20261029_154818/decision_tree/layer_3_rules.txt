@@ -1,0 +1,7 @@
+|--- length_log <= 0.69
+|   |--- numeric_density <= 0.39
+|   |   |--- class: 0
+|   |--- numeric_density >  0.39
+|   |   |--- class: 1
+|--- length_log >  0.69
+|   |--- class: 1
