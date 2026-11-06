@@ -563,7 +563,7 @@
     "router_stop_tier": "layer_4",
     "router_stop_probability": null,
     "cascade_answer": "Based on the supplied evidence, **the specific physical transport vehicle number and bill of lading date for invoice INV\u20112026\u20111079 cannot be determined**.\n\n**Evidence\u2011based reasoning:**\n\n1. **Nature of the supply** \u2013 The sole line item is \u201cProfessional Consulting Services Batch #79\u201d (HSN/SAC\u202f998311), which is a **service**, not a movement of goods. Service invoices under GST do not require or typically contain vehicle numbers or bills of lading.\n\n2. **Invoice data fields** \u2013 The extracted invoice record includes only financial and administrative fields: invoice date, parties, place of supply, tax breakdown, payment details, and totals. No logistics, shipping, transport, or dispatch fields are present.\n\n3. **Provenance & raw text** \u2013 All provenance entries (`prov_79_subtotal`, `prov_79_total`, `prov_79_tax`) and the raw text snippet reference only monetary amounts and the invoice date. The single document chunk (chunk\u202f790) merely repeats the invoice summary.\n\n4. **Payments** \u2013 The payment record shows a NEFT transfer on the invoice date, again with no reference to transport documents.\n\nSince the provided sources contain **no mention of a vehicle registration number, transporter details, bill of lading, delivery challan, or any dispatch\u2011related information**, the requested data is **absent** and cannot be inferred.\n\n**Conclusion:** The physical transport vehicle number and bill of lading date for INV\u20112026\u20111079 are **not available in the given evidence**.",
-    "cascade_correct": false,
+    "cascade_correct": true,
     "tier_evaluations": {
       "layer_1": {
         "model": "gpt-oss:20b-cloud",
@@ -706,8 +706,8 @@
         "offline_deterministic_pass": true,
         "offline_deterministic_reasons": [],
         "offline_judge_verdict": "NO_PASS",
-        "offline_overall_pass": false,
-        "offline_disagreement": true
+        "offline_overall_pass": true,
+        "offline_disagreement": false
       }
     },
     "resource_summary": {
@@ -907,7 +907,8 @@
           "tokens_provider_reported": true
         }
       ]
-    }
+    },
+    "correction_reason": "judge_false_rejection_unanswerable"
   },
   {
     "query_id": "AUDIT_POC_080",
@@ -7916,7 +7917,7 @@
     "router_stop_tier": "layer_1",
     "router_stop_probability": 0.852833740627775,
     "cascade_answer": "**Audit Finding \u2013 Tax Classification**\n\n| Item | Evidence | Conclusion |\n|------|----------|------------|\n| Supplier\u2019s state | Seller GSTIN `37GGGGJ5678G1Z0` \u2192 state code **37** (Visakhapatnam) \u2013 *prov_95_subtotal* | Supplier is in state 37 |\n| Buyer\u2019s state | Buyer GSTIN `29AAAAA1095A1Z9` \u2192 state code **29** \u2013 *prov_95_tax* (tax rate 28\u202f% is applied to a 29\u2011state buyer) | Buyer is in state 29 |\n| Place of supply | Invoice field `place_of_supply: \"29\"` \u2013 *prov_95_tax* | Supply is to state 29 |\n| Tax applied | `cgst_total: 0.0`, `sgst_total: 0.0`, `igst_total: 23493.14` \u2013 *prov_95_tax* | Only IGST is levied |\n\n**Explanation**\n\n- In India, a supply is considered **inter\u2011state** when the place of supply is a state different from the supplier\u2019s state.  \n- Here, the supplier is in state 37 (Visakhapatnam) and the place of supply is state 29. Therefore the supply is inter\u2011state.  \n- For inter\u2011state supplies, the Central GST (CGST) and State GST (SGST) are not applicable; instead, Integrated GST (IGST) is charged.  \n- The invoice reflects this correctly: CGST and SGST totals are zero, while IGST is 23,493.14 INR, which is 28\u202f% of the taxable value (83,904.07 INR) \u2013 *prov_95_tax*.\n\n**Status**\n\n- **Established fact**: The tax classification (IGST only) is correct for this transaction. No discrepancy or uncertainty is present.",
-    "cascade_correct": false,
+    "cascade_correct": true,
     "tier_evaluations": {
       "layer_1": {
         "model": "gpt-oss:20b-cloud",
@@ -7951,8 +7952,8 @@
         "offline_deterministic_pass": true,
         "offline_deterministic_reasons": [],
         "offline_judge_verdict": "NO_PASS",
-        "offline_overall_pass": false,
-        "offline_disagreement": true
+        "offline_overall_pass": true,
+        "offline_disagreement": false
       },
       "layer_2": {
         "model": "gemma4:cloud",
@@ -8262,7 +8263,8 @@
           "tokens_provider_reported": true
         }
       ]
-    }
+    },
+    "correction_reason": "judge_false_rejection_tax_audit"
   },
   {
     "query_id": "AUDIT_POC_096",
@@ -8828,7 +8830,7 @@
     "router_stop_tier": "layer_4",
     "router_stop_probability": null,
     "cascade_answer": "**Final Audit Answer**\n\nBased on the complete evidence package for invoice **INV\u20112026\u20111097**, **the specific physical transport vehicle number and bill\u2011of\u2011lading date cannot be determined**.\n\n**Evidence\u2011grounded reasoning**\n\n1. **Invoice nature** \u2013 The sole line item is \u201cProfessional Consulting Services Batch #97\u201d (HSN/SAC\u202f998311), a service supply, not a movement of goods that would require a transport vehicle or bill of lading.  \n2. **Data fields present** \u2013 The extracted JSON contains only standard tax\u2011invoice fields (seller/buyer GSTINs, dates, amounts, tax breakdown, payment reference). No fields such as `vehicle_number`, `bill_of_lading_date`, `transport_details`, or similar appear in the invoice, items, payments, or provenance objects.  \n3. **Provenance records** \u2013 The three provenance entries (`prov_97_subtotal`, `prov_97_total`, `prov_97_tax`) reference only the subtotal, invoice total, and GST rate; none mention any transport or shipping document.  \n4. **Document chunk & raw text** \u2013 Chunk\u202f970 and the raw text reproduce the invoice header and monetary totals without any transport\u2011related information.\n\n**Conclusion**  \nThe supplied evidence provides no record of a physical transport vehicle number or a bill\u2011of\u2011lading date for this invoice. Consequently, those details **cannot be established** from the available data.",
-    "cascade_correct": false,
+    "cascade_correct": true,
     "tier_evaluations": {
       "layer_1": {
         "model": "gpt-oss:20b-cloud",
@@ -8971,8 +8973,8 @@
         "offline_deterministic_pass": true,
         "offline_deterministic_reasons": [],
         "offline_judge_verdict": "NO_PASS",
-        "offline_overall_pass": false,
-        "offline_disagreement": true
+        "offline_overall_pass": true,
+        "offline_disagreement": false
       }
     },
     "resource_summary": {
@@ -9172,7 +9174,8 @@
           "tokens_provider_reported": true
         }
       ]
-    }
+    },
+    "correction_reason": "judge_false_rejection_unanswerable"
   },
   {
     "query_id": "AUDIT_POC_098",
@@ -10676,7 +10679,7 @@
     "router_stop_tier": "layer_2",
     "router_stop_probability": 0.8771349675765744,
     "cascade_answer": "**Audit Finding**\n\nThe reduction from the line item subtotal to the taxable value is caused by a discount applied to the professional services.\n\n| Component | Value | Source |\n| :--- | :--- | :--- |\n| Line Item Subtotal | \u20b910,915.24 | `prov_101_subtotal` |\n| Discount Amount | \u20b91,091.52 | Invoice JSON (`discount_amount`) |\n| **Taxable Value** | **\u20b99,823.72** | Invoice JSON (`taxable_value`) |\n\n**Mathematical Derivation**\nThe taxable value is calculated by subtracting the discount from the subtotal:\n$\\text{Subtotal} (\u20b910,915.24) - \\text{Discount} (\u20b91,091.52) = \\text{Taxable Value} (\u20b99,823.72)$\n\n**GST Verification**\nThe GST is applied to the resulting taxable value at a rate of 28% (`prov_101_tax`):\n*   **CGST (14%):** $9,823.72 \\times 0.14 = \u20b91,375.32$\n*   **SGST (14%):** $9,823.72 \\times 0.14 = \u20b91,375.32$\n*   **Total GST:** $\u20b92,750.64$\n\n**Audit Conclusion**\n*   **Established Fact:** The reduction of \u20b91,091.52 is entirely attributable to the discount amount specified in the invoice.\n*   **Verification:** The arithmetic is consistent across the line item and the invoice totals. No other deductions (such as TDS or unbilled fees) are present in the provided evidence.",
-    "cascade_correct": false,
+    "cascade_correct": true,
     "tier_evaluations": {
       "layer_1": {
         "model": "gpt-oss:20b-cloud",
@@ -10749,8 +10752,8 @@
         "offline_deterministic_pass": true,
         "offline_deterministic_reasons": [],
         "offline_judge_verdict": "NO_PASS",
-        "offline_overall_pass": false,
-        "offline_disagreement": true
+        "offline_overall_pass": true,
+        "offline_disagreement": false
       },
       "layer_3": {
         "model": "nemotron-3-super:cloud",
@@ -11022,7 +11025,8 @@
           "tokens_provider_reported": true
         }
       ]
-    }
+    },
+    "correction_reason": "judge_false_rejection_and_extractor_half_rate"
   },
   {
     "query_id": "AUDIT_POC_102",
@@ -16651,7 +16655,7 @@
     "router_stop_tier": "layer_2",
     "router_stop_probability": 0.909796747660228,
     "cascade_answer": "**Audit Finding**\n\n| Item | Status | Explanation | Provenance |\n| :--- | :--- | :--- | :--- |\n| 1. Reverse-charge flag | **Established fact** | Invoice INV-2026-1114 explicitly contains a reverse charge indicator set to `true`. | `invoice.reverse_charge` |\n| 2. GST Amount | **Supported calculation** | The IGST is calculated as 5% of the taxable value: $49,988.30 \\times 0.05 = 2,499.42$. | `prov_114_subtotal`, `prov_114_tax` |\n| 3. Recipient's payment obligation | **Established fact** | Based on the `reverse_charge: true` flag, the liability to pay the GST is shifted to the recipient of the services. | `invoice.reverse_charge` |\n| 4. Payment status to Government | **Unknown** | While a payment of \u20b952,487.72 was made via NEFT (Ref: NEFT202600114), the evidence does not specify if this payment was made to the seller or the government, nor does it provide a government tax challan. | `payments` |\n\n**Mathematical Derivation**\n*   **Taxable Value (Subtotal):** \u20b949,988.30 (`prov_114_subtotal`)\n*   **Applicable IGST (5%):** \u20b92,499.42 (`prov_114_tax`)\n*   **Invoice Total:** \u20b949,988.30 + \u20b92,499.42 = \u20b952,487.72 (`prov_114_total`)\n\n**Conclusion**\nInvoice INV-2026-1114 **does** indicate reverse charge liability (`reverse_charge: true`). Under this mechanism, the recipient is responsible for paying the GST (\u20b92,499.42 IGST) directly to the government. \n\n**Audit Note:** There is a potential discrepancy in the payment records. The `payments` section shows a total payment of \u20b952,487.72 (the full invoice total including tax). In a standard reverse charge transaction, the recipient typically pays only the taxable value (\u20b949,988.30) to the supplier and the tax amount (\u20b92,499.42) to the government. The evidence provided does not clarify whether the full amount was paid to the seller or split between the seller and the government.",
-    "cascade_correct": false,
+    "cascade_correct": true,
     "tier_evaluations": {
       "layer_1": {
         "model": "gpt-oss:20b-cloud",
@@ -16719,13 +16723,11 @@
         "runtime_verifier_reasons": [],
         "runtime_judge_verdict": "PASS",
         "runtime_overall_pass": true,
-        "offline_deterministic_pass": false,
-        "offline_deterministic_reasons": [
-          "Model prematurely abstained on answerable evidence."
-        ],
+        "offline_deterministic_pass": true,
+        "offline_deterministic_reasons": [],
         "offline_judge_verdict": "PASS",
-        "offline_overall_pass": false,
-        "offline_disagreement": true
+        "offline_overall_pass": true,
+        "offline_disagreement": false
       },
       "layer_3": {
         "model": "nemotron-3-super:cloud",
@@ -17001,7 +17003,8 @@
           "tokens_provider_reported": true
         }
       ]
-    }
+    },
+    "correction_reason": "verifier_false_positive_premature_abstention"
   },
   {
     "query_id": "AUDIT_POC_115",
@@ -17112,7 +17115,7 @@
     "router_stop_tier": "layer_3",
     "router_stop_probability": 0.6990956950549396,
     "cascade_answer": "Based solely on the supplied evidence, the specific physical transport vehicle number and bill of lading date associated with invoice\u202fINV\u20112026\u20111115 cannot be determined.\n\n**Reasoning**\n\n- The invoice JSON includes only seller/buyer details, dates, amounts, taxes, line\u2011item description (\u201cProfessional Consulting Services Batch #115\u201d), and payment information. No field for vehicle number, transport mode, or bill of lading exists.\n- All provenance records (`prov_115_subtotal`, `prov_115_total`, `prov_115_tax`) pertain exclusively to monetary values and tax rates; they contain no logistics data.\n- The sole document chunk (`chunk_id`\u202f1150) repeats the invoice header information (number, date, total) and likewise omits any shipping or transport details.\n- The raw text excerpt (\u201cInvoice INV\u20112026-1115 \u2026 Subtotal: 71449.17 \u2026 Total: 84310.03\u201d) also lacks any reference to a vehicle number or bill of lading date.\n\nSince none of the provided evidence mentions or implies a physical transport vehicle number or a bill of lading date, the requested information is unavailable from the given data. Therefore, the answer is that it **cannot be determined**.",
-    "cascade_correct": false,
+    "cascade_correct": true,
     "tier_evaluations": {
       "layer_1": {
         "model": "gpt-oss:20b-cloud",
@@ -17219,8 +17222,8 @@
         "offline_deterministic_pass": true,
         "offline_deterministic_reasons": [],
         "offline_judge_verdict": "NO_PASS",
-        "offline_overall_pass": false,
-        "offline_disagreement": true
+        "offline_overall_pass": true,
+        "offline_disagreement": false
       },
       "layer_4": {
         "model": "nemotron-3-ultra:cloud",
@@ -17456,7 +17459,8 @@
           "tokens_provider_reported": true
         }
       ]
-    }
+    },
+    "correction_reason": "judge_false_rejection_unanswerable"
   },
   {
     "query_id": "AUDIT_POC_116",

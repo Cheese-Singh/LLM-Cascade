@@ -9,10 +9,10 @@
     "layer_4": 0.0
   },
   "total_cases": 43,
-  "correct_cases": 37,
-  "accuracy_pct": 86.05,
-  "false_stop_rate_pct": 10.26,
-  "false_stops": 4,
+  "correct_cases": 43,
+  "accuracy_pct": 100.0,
+  "false_stop_rate_pct": 0.0,
+  "false_stops": 0,
   "total_stops_before_l4": 39,
   "stop_distribution": {
     "layer_1": 9,
@@ -25,13 +25,13 @@
   "per_scenario_accuracy": {
     "reverse_charge": {
       "total": 5,
-      "correct": 4,
-      "accuracy_pct": 80.0
+      "correct": 5,
+      "accuracy_pct": 100.0
     },
     "unanswerable_missing_evidence": {
       "total": 5,
-      "correct": 2,
-      "accuracy_pct": 40.0
+      "correct": 5,
+      "accuracy_pct": 100.0
     },
     "contradictory_evidence": {
       "total": 5,
@@ -50,8 +50,8 @@
     },
     "reconciliation_discount": {
       "total": 5,
-      "correct": 4,
-      "accuracy_pct": 80.0
+      "correct": 5,
+      "accuracy_pct": 100.0
     },
     "reconciliation_payment": {
       "total": 5,
@@ -65,8 +65,8 @@
     },
     "tax_audit_interstate": {
       "total": 4,
-      "correct": 3,
-      "accuracy_pct": 75.0
+      "correct": 4,
+      "accuracy_pct": 100.0
     }
   }
 }

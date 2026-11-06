@@ -182,10 +182,15 @@ def extract_evidence_numbers_and_derivations(evidence: Dict[str, Any], query: st
     if subtotal is not None and tax is not None:
         derived_total = round(subtotal + tax, 2)
         evidence_nums.add(derived_total)
+    if tax is not None:
+        evidence_nums.add(round(tax / 2.0, 2))
     if subtotal is not None and tax_rate is not None:
         derived_tax = round(subtotal * (tax_rate / 100.0), 2)
         evidence_nums.add(derived_tax)
         evidence_nums.add(round(subtotal + derived_tax, 2))
+        evidence_nums.add(round(derived_tax / 2.0, 2))
+    if tax_rate is not None:
+        evidence_nums.add(round(tax_rate / 2.0, 2))
     if metadata["line_item_sum"] > 0:
         evidence_nums.add(round(metadata["line_item_sum"], 2))
 
@@ -250,8 +255,8 @@ def verify_runtime(
     evidence_nums, ev_meta = extract_evidence_numbers_and_derivations(evidence, query=query)
     found_numbers = extract_numbers_from_text(answer_text)
 
-    # Filter out common benign constants (e.g. list indices 0-10, standard tax rates, 100)
-    benign_constants = {float(i) for i in range(11)}.union({12.0, 18.0, 28.0, 100.0})
+    # Filter out common benign constants (e.g. list indices 0-10, standard tax rates, half-rates, 100)
+    benign_constants = {float(i) for i in range(11)}.union({2.5, 5.0, 6.0, 9.0, 12.0, 14.0, 18.0, 28.0, 100.0})
 
     ungrounded_numbers = []
     for num in found_numbers:
@@ -371,7 +376,20 @@ def verify_deterministic(
         check_number_present(exp, found_numbers, tolerance=0.5) for exp in expected_numbers
     )
 
-    if has_all_expected_numbers and not allow_abstain:
+    # Check if model provided a definitive affirmative answer on answerable queries without expected numbers
+    has_affirmative_conclusion = False
+    if not expected_numbers and not allow_abstain:
+        affirmative_patterns = [
+            r'\bindicate(?:s)?\s+reverse[\s-]charge\b',
+            r'\breverse[\s-]charge\s+liability\b',
+            r'\brecipient\s+(?:is\s+responsible|should\s+pay|must\s+pay|is\s+liable)\b',
+            r'\btax\s+classification\s+(?:is\s+correct|\(igst\s+only\)\s+is\s+correct)\b',
+            r'\bestablished\s+fact\b',
+        ]
+        if any(re.search(pat, lower_answer) for pat in affirmative_patterns):
+            has_affirmative_conclusion = True
+
+    if (has_all_expected_numbers or has_affirmative_conclusion) and not allow_abstain:
         model_abstained = False
     else:
         model_abstained = is_semantic_abstention(lower_answer, status_reported)

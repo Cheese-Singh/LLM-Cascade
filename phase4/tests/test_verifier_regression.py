@@ -285,6 +285,37 @@ class TestVerifierRegressionSuite(unittest.TestCase):
         self.assertTrue(any("Invalid / hallucinated citations" in r for r in bad_res["reasons"]))
         self.assertTrue(any("ungrounded numbers" in r for r in bad_res["reasons"]))
 
+    def test_reverse_charge_affirmative_with_collateral_note_does_not_abstain(self):
+        """Affirmative determination of reverse charge should not be treated as abstention due to collateral note."""
+        answer = (
+            "Invoice INV-2026-1114 does indicate reverse charge liability (reverse_charge: true). "
+            "Under this mechanism, the recipient is responsible for paying the GST directly to the government. "
+            "Note: The evidence does not specify whether payment was made to the seller or government."
+        )
+        gt = {
+            "expected_status": "MATCHED",
+            "expected_numbers": [],
+            "allow_abstain": False,
+        }
+        res = verify_deterministic(answer, "MATCHED", gt, {})
+        self.assertTrue(res["deterministic_pass"], f"Unexpected failure: {res['reasons']}")
+        self.assertFalse(res["model_abstained"])
+
+    def test_gst_split_half_rates_are_grounded(self):
+        """Derived CGST/SGST half-rates (e.g. 14% from 28% GST) must be accepted as grounded."""
+        evidence = {
+            "invoice": {
+                "subtotal": 9823.72,
+                "tax_rate": 28.0,
+                "tax_amount": 2750.64,
+                "invoice_total": 12574.36,
+            }
+        }
+        answer = "CGST (14%): ₹1,375.32 and SGST (14%): ₹1,375.32 applied to taxable value ₹9,823.72."
+        res = verify_runtime(answer, evidence, "Verify tax rates")
+        self.assertTrue(res["runtime_pass"], f"Runtime verification failed: {res['reasons']}")
+        self.assertNotIn(14.0, res["ungrounded_numbers"])
+
 
 if __name__ == "__main__":
     unittest.main()
