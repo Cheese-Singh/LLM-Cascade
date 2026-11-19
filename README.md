@@ -887,7 +887,7 @@ The LR Router matches the Hybrid policy on accuracy and FSR while using 8.5% few
 | Metric | Frozen LR Router | Always-L1 | Always-L2 | Always-L3 | Always-L4 |
 |--------|------------------|-----------|-----------|-----------|-----------|
 | **Accuracy** | **100.0%** (43/43) | 88.4% (38/43) | 90.7% (39/43) | 88.4% (38/43) | 74.4% (32/43) |
-| **False-Stop Rate** | **0.0%** (0/39) | 11.6% (5/43) | 9.3% (4/43) | 11.6% (5/43) | 0.0% (0/0) |
+| **False-Stop Rate** | **0.0%** (0/43) | 11.6% (5/43) | 9.3% (4/43) | 11.6% (5/43) | 0.0% (0/0) |
 | **Cascade Stop Distribution** | L1: 9, L2: 29, L3: 1, L4: 4 | L1: 43 | L2: 43 | L3: 43 | L4: 43 |
 | **Avg Generator Tokens** | **4,154** | ~1,800 | ~3,200 | ~6,500 | ~9,500 |
 
